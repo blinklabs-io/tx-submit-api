@@ -1,0 +1,35 @@
+---
+# Example config file for cardano-submit-api
+# The values shown below correspond to the in-code defaults
+
+logging:
+  # Logging level
+  #
+  # This can also be set via the LOGGING_LEVEL environment variable
+  level: info
+
+api:
+  # Listen address for the API
+  #
+  # This can also be set via the API_LISTEN_ADDRESS environment variable
+  address:
+
+  # Listen port for the API
+  #
+  # This can also be set via the API_LISTEN_PORT environment variable
+  port: 8090
+
+node:
+  # Path to UNIX socket file for cardano-node
+  #
+  # This can also be set via the NODE_SOCKET_PATH environment variable
+  socketPath:
+
+  # Address/port for cardano-node
+  #
+  # This requires that you be running socat or similar to create a bridge
+  # between TCP and the UNIX socket.
+  #
+  # These can also be set via the NODE_ADDRESS and NODE_PORT environment variables
+  address:
+  port:
