@@ -11,6 +11,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
+	"github.com/penglongli/gin-metrics/ginmetrics"
 	"golang.org/x/crypto/blake2b"
 	"io/ioutil"
 )
@@ -29,12 +30,31 @@ func Start(cfg *config.Config) error {
 	router.Use(ginzap.Ginzap(accessLogger, "", true))
 	router.Use(ginzap.RecoveryWithZap(accessLogger, true))
 
-	// Configure routes
+	// Create a healthcheck (before metrics so it's not instrumented)
 	router.GET("/healthcheck", handleHealthcheck)
+
+	// Metrics
+	metricsRouter := gin.New()
+	metrics := ginmetrics.GetMonitor()
+	// Set metrics router
+	metrics.Expose(metricsRouter)
+	// Use metrics middleware without exposing path in main app router
+	metrics.UseWithoutExposingEndpoint(router)
+	// Start metrics listener
+	go func() {
+		// TODO: return error if we cannot initialize metrics
+		_ = metricsRouter.Run(fmt.Sprintf("%s:%d",
+			cfg.Api.MetricsAddress,
+			cfg.Api.MetricsPort))
+	}()
+
+	// Configure API routes
 	router.POST("/api/submit/tx", handleSubmitTx)
 
-	// Start listener
-	err := router.Run(fmt.Sprintf("%s:%d", cfg.Api.ListenAddress, cfg.Api.ListenPort))
+	// Start API listener
+	err := router.Run(fmt.Sprintf("%s:%d",
+		cfg.Api.ListenAddress,
+		cfg.Api.ListenPort))
 	return err
 }
 

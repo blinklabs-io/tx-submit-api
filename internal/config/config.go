@@ -24,8 +24,10 @@ type LoggingConfig struct {
 }
 
 type ApiConfig struct {
-	ListenAddress string `yaml:"address" envconfig:"API_LISTEN_ADDRESS"`
-	ListenPort    uint   `yaml:"port" envconfig:"API_LISTEN_PORT"`
+	ListenAddress  string `yaml:"address" envconfig:"API_LISTEN_ADDRESS"`
+	ListenPort     uint   `yaml:"port" envconfig:"API_LISTEN_PORT"`
+	MetricsAddress string `yaml:"metricsAddress" envconfig:"METRICS_LISTEN_ADDRESS"`
+	MetricsPort    uint   `yaml:"metricsPort" envconfig:"METRICS_LISTEN_PORT"`
 }
 
 type NodeConfig struct {
@@ -42,8 +44,10 @@ var globalConfig = &Config{
 		Level: "info",
 	},
 	Api: ApiConfig{
-		ListenAddress: "",
-		ListenPort:    8090,
+		ListenAddress:  "",
+		ListenPort:     8090,
+		MetricsAddress: "",
+		MetricsPort:    8091,
 	},
 	Node: NodeConfig{
 		Network:    "mainnet",
