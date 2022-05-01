@@ -86,15 +86,13 @@ func handleSubmitTx(c *gin.Context) {
 			},
 		},
 	}
-	go func() {
-		err, ok := <-errorChan
-		if ok {
-			logger.Errorf("failure communicating with node: %s", err)
-			c.String(500, "failure communicating with node")
-			doneChan <- true
-		}
-	}()
 	oConn, err := ouroboros.New(oOpts)
+	defer func() {
+		// We have to close the channel to break out of the async error handler goroutine
+		close(errorChan)
+		// Close Ouroboros connection
+		oConn.Close()
+	}()
 	if err != nil {
 		logger.Errorf("failure creating Ouroboros connection: %s", err)
 		c.String(500, "failure communicating with node")
@@ -113,6 +111,15 @@ func handleSubmitTx(c *gin.Context) {
 			return
 		}
 	}
+	// Start async error handler
+	go func() {
+		err, ok := <-errorChan
+		if ok {
+			logger.Errorf("failure communicating with node: %s", err)
+			c.String(500, "failure communicating with node")
+			doneChan <- true
+		}
+	}()
 	// TODO: figure out better way to determine era
 	if err = oConn.LocalTxSubmission.SubmitTx(block.TX_TYPE_ALONZO, rawTx); err != nil {
 		logger.Errorf("failure submitting transaction: %s", err)
@@ -121,6 +128,4 @@ func handleSubmitTx(c *gin.Context) {
 	}
 	// Wait for async process to finish
 	<-doneChan
-	// We have to close the channel to break out of the Goroutine waiting on it
-	close(errorChan)
 }
