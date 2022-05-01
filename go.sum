@@ -1,7 +1,7 @@
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
-github.com/cloudstruct/go-ouroboros-network v0.13.0 h1:q6l4QQocuDTz0TOynEo5jwe9R+9tCL6vLJpWdMer9kc=
-github.com/cloudstruct/go-ouroboros-network v0.13.0/go.mod h1:06ggUMerJLwKJkVi5DLX1QMDz8r+R8o92rht7Z4ss9k=
+github.com/cloudstruct/go-ouroboros-network v0.13.1 h1:/F9fXKXLmGPdMQrqyBovbTbLUZdj/7cG0qjA/a31cZk=
+github.com/cloudstruct/go-ouroboros-network v0.13.1/go.mod h1:06ggUMerJLwKJkVi5DLX1QMDz8r+R8o92rht7Z4ss9k=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
