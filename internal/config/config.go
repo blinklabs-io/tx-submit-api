@@ -16,6 +16,7 @@ const (
 type Config struct {
 	Logging LoggingConfig `yaml:"logging"`
 	Api     ApiConfig     `yaml:"api"`
+	Debug   DebugConfig   `yaml:"debug"`
 	Node    NodeConfig    `yaml:"node"`
 }
 
@@ -26,6 +27,11 @@ type LoggingConfig struct {
 type ApiConfig struct {
 	ListenAddress string `yaml:"address" envconfig:"API_LISTEN_ADDRESS"`
 	ListenPort    uint   `yaml:"port" envconfig:"API_LISTEN_PORT"`
+}
+
+type DebugConfig struct {
+	ListenAddress string `yaml:"address" envconfig:"DEBUG_ADDRESS"`
+	ListenPort    uint   `yaml:"port" envconfig:"DEBUG_PORT"`
 }
 
 type NodeConfig struct {
@@ -44,6 +50,10 @@ var globalConfig = &Config{
 	Api: ApiConfig{
 		ListenAddress: "",
 		ListenPort:    8090,
+	},
+	Debug: DebugConfig{
+		ListenAddress: "localhost",
+		ListenPort:    0,
 	},
 	Node: NodeConfig{
 		Network:    "mainnet",
