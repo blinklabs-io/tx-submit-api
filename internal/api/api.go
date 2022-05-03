@@ -42,6 +42,18 @@ func Start(cfg *config.Config) error {
 	metrics.SetMetricPath("/")
 	// Use metrics middleware without exposing path in main app router
 	metrics.UseWithoutExposingEndpoint(router)
+
+	// Custom metric
+	submittedMetric := &ginmetrics.Metric{
+		// This is a Gauge because input-output-hk's is a gauge
+		Type:        ginmetrics.Gauge,
+		Name:        "tx_submit_count",
+		Description: "transactions submitted",
+		Labels:      nil,
+	}
+	// Add to global monitor object
+	_ = ginmetrics.GetMonitor().AddMetric(submittedMetric)
+
 	// Start metrics listener
 	go func() {
 		// TODO: return error if we cannot initialize metrics
@@ -99,6 +111,8 @@ func handleSubmitTx(c *gin.Context) {
 				// Return transaction ID
 				c.String(202, txIdHex)
 				doneChan <- true
+				// Increment custom metric
+				_ = ginmetrics.GetMonitor().GetMetric("tx_submit_count").Inc(nil)
 				return nil
 			},
 			RejectTxFunc: func(reason interface{}) error {
