@@ -13,10 +13,13 @@ $(BINARY): $(GO_FILES)
 	go mod tidy
 	go build -o $(BINARY) ./cmd/$(BINARY)
 
-.PHONY: build image
+.PHONY: build clean image
 
 # Alias for building program binary
 build: $(BINARY)
+
+clean:
+	rm -f $(BINARY)
 
 # Build docker image
 image: build

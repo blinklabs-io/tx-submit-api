@@ -19,6 +19,20 @@ api:
   # This can also be set via the API_LISTEN_PORT environment variable
   port: 8090
 
+# The debug endpoint provides access to pprof for debugging purposes. This is
+# disabled by default, but it can be enabled by setting the port to a non-zero
+# value
+debug:
+  # Listen address for the debug endpoint
+  #
+  # This can also be set via the DEBUG_ADDRESS environment variable
+  address: localhost
+
+  # Listen port for the debug endpoint
+  #
+  # This can also be set via the DEBUG_PORT environment variable
+  port: 0
+
 node:
   # Path to UNIX socket file for cardano-node
   #

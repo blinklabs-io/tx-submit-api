@@ -6,6 +6,8 @@ import (
 	"github.com/cloudstruct/go-cardano-submit-api/internal/api"
 	"github.com/cloudstruct/go-cardano-submit-api/internal/config"
 	"github.com/cloudstruct/go-cardano-submit-api/internal/logging"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 )
 
@@ -35,6 +37,17 @@ func main() {
 			return
 		}
 	}()
+
+	// Start debug listener
+	if cfg.Debug.ListenPort > 0 {
+		logger.Infof("starting debug listener on %s:%d", cfg.Debug.ListenAddress, cfg.Debug.ListenPort)
+		go func() {
+			err := http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Debug.ListenAddress, cfg.Debug.ListenPort), nil)
+			if err != nil {
+				logger.Fatalf("failed to start debug listener: %s", err)
+			}
+		}()
+	}
 
 	// Start API listener
 	logger.Infof("starting API listener on %s:%d", cfg.Api.ListenAddress, cfg.Api.ListenPort)
