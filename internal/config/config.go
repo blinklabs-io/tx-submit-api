@@ -53,7 +53,7 @@ var globalConfig = &Config{
 		ListenAddress:  "",
 		ListenPort:     8090,
 		MetricsAddress: "",
-		MetricsPort:    8091,
+		MetricsPort:    8081,
 	},
 	Debug: DebugConfig{
 		ListenAddress: "localhost",
