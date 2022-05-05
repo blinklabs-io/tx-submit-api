@@ -3,7 +3,7 @@ module github.com/cloudstruct/go-cardano-submit-api
 go 1.17
 
 require (
-	github.com/cloudstruct/go-ouroboros-network v0.13.2
+	github.com/cloudstruct/go-ouroboros-network v0.13.3
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/gin-contrib/zap v0.0.2
 	github.com/gin-gonic/gin v1.7.7
