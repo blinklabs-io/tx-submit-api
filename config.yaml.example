@@ -19,6 +19,17 @@ api:
   # This can also be set via the API_LISTEN_PORT environment variable
   port: 8090
 
+metrics:
+  # Listen address for the metrics endpoint
+  #
+  # This can also be set via the METRICS_LISTEN_ADDRESS environment variable
+  address:
+
+  # Listen port for the metrics endpoint
+  #
+  # This can also be set via the METRICS_LISTEN_PORT environment variable
+  port: 8081
+
 # The debug endpoint provides access to pprof for debugging purposes. This is
 # disabled by default, but it can be enabled by setting the port to a non-zero
 # value
