@@ -16,6 +16,7 @@ const (
 type Config struct {
 	Logging LoggingConfig `yaml:"logging"`
 	Api     ApiConfig     `yaml:"api"`
+	Metrics MetricsConfig `yaml:"metrics"`
 	Debug   DebugConfig   `yaml:"debug"`
 	Node    NodeConfig    `yaml:"node"`
 }
@@ -27,13 +28,16 @@ type LoggingConfig struct {
 type ApiConfig struct {
 	ListenAddress  string `yaml:"address" envconfig:"API_LISTEN_ADDRESS"`
 	ListenPort     uint   `yaml:"port" envconfig:"API_LISTEN_PORT"`
-	MetricsAddress string `yaml:"metricsAddress" envconfig:"METRICS_LISTEN_ADDRESS"`
-	MetricsPort    uint   `yaml:"metricsPort" envconfig:"METRICS_LISTEN_PORT"`
 }
 
 type DebugConfig struct {
 	ListenAddress string `yaml:"address" envconfig:"DEBUG_ADDRESS"`
 	ListenPort    uint   `yaml:"port" envconfig:"DEBUG_PORT"`
+}
+
+type MetricsConfig struct {
+	ListenAddress string `yaml:"address" envconfig:"METRICS_LISTEN_ADDRESS"`
+	ListenPort    uint   `yaml:"port" envconfig:"METRICS_LISTEN_PORT"`
 }
 
 type NodeConfig struct {
@@ -52,12 +56,14 @@ var globalConfig = &Config{
 	Api: ApiConfig{
 		ListenAddress:  "",
 		ListenPort:     8090,
-		MetricsAddress: "",
-		MetricsPort:    8081,
 	},
 	Debug: DebugConfig{
 		ListenAddress: "localhost",
 		ListenPort:    0,
+	},
+	Metrics: MetricsConfig{
+		ListenAddress: "",
+		ListenPort:    8081,
 	},
 	Node: NodeConfig{
 		Network:    "mainnet",

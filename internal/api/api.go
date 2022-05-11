@@ -66,8 +66,8 @@ func Start(cfg *config.Config) error {
 	go func() {
 		// TODO: return error if we cannot initialize metrics
 		_ = metricsRouter.Run(fmt.Sprintf("%s:%d",
-			cfg.Api.MetricsAddress,
-			cfg.Api.MetricsPort))
+			cfg.Metrics.ListenAddress,
+			cfg.Metrics.ListenPort))
 	}()
 
 	// Configure API routes
