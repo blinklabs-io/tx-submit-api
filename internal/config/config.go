@@ -36,8 +36,8 @@ type DebugConfig struct {
 }
 
 type MetricsConfig struct {
-	MetricsAddress string `yaml:"metricsAddress" envconfig:"METRICS_LISTEN_ADDRESS"`
-	MetricsPort    uint   `yaml:"metricsPort" envconfig:"METRICS_LISTEN_PORT"`
+	ListenAddress string `yaml:"address" envconfig:"METRICS_LISTEN_ADDRESS"`
+	ListenPort    uint   `yaml:"port" envconfig:"METRICS_LISTEN_PORT"`
 }
 
 type NodeConfig struct {
@@ -62,8 +62,8 @@ var globalConfig = &Config{
 		ListenPort:    0,
 	},
 	Metrics: MetricsConfig{
-		MetricsAddress: "",
-		MetricsPort:    8081,
+		ListenAddress: "",
+		ListenPort:    8081,
 	},
 	Node: NodeConfig{
 		Network:    "mainnet",
