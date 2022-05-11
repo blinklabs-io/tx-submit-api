@@ -43,7 +43,14 @@ func Start(cfg *config.Config) error {
 	// Use metrics middleware without exposing path in main app router
 	metrics.UseWithoutExposingEndpoint(router)
 
-	// Custom metric
+	// Custom metrics
+	failureMetric := &ginmetrics.Metric{
+		// This is a Gauge because input-output-hk's is a gauge
+		Type:        ginmetrics.Gauge,
+		Name:        "tx_failure_count",
+		Description: "transactions failed",
+		Labels:      nil,
+	}
 	submittedMetric := &ginmetrics.Metric{
 		// This is a Gauge because input-output-hk's is a gauge
 		Type:        ginmetrics.Gauge,
@@ -52,6 +59,7 @@ func Start(cfg *config.Config) error {
 		Labels:      nil,
 	}
 	// Add to global monitor object
+	_ = ginmetrics.GetMonitor().AddMetric(failureMetric)
 	_ = ginmetrics.GetMonitor().AddMetric(submittedMetric)
 
 	// Start metrics listener
@@ -85,6 +93,7 @@ func handleSubmitTx(c *gin.Context) {
 	if err != nil {
 		logger.Errorf("failed to read request body: %s", err)
 		c.String(500, "failed to request body")
+		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
 	if err := c.Request.Body.Close(); err != nil {
@@ -95,6 +104,7 @@ func handleSubmitTx(c *gin.Context) {
 	if err := cbor.Unmarshal(rawTx, &txUnwrap); err != nil {
 		logger.Errorf("failed to unwrap transaction CBOR: %s", err)
 		c.String(400, fmt.Sprintf("failed to unwrap transaction CBOR: %s", err))
+		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
 	txId := blake2b.Sum256(txUnwrap[0])
@@ -118,6 +128,8 @@ func handleSubmitTx(c *gin.Context) {
 			RejectTxFunc: func(reason interface{}) error {
 				c.String(400, fmt.Sprintf("transaction rejected by node: %#v", reason))
 				doneChan <- true
+				// Increment custom metric
+				_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 				return nil
 			},
 		},
@@ -132,18 +144,21 @@ func handleSubmitTx(c *gin.Context) {
 	if err != nil {
 		logger.Errorf("failure creating Ouroboros connection: %s", err)
 		c.String(500, "failure communicating with node")
+		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
 	if cfg.Node.Address != "" && cfg.Node.Port > 0 {
 		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", cfg.Node.Address, cfg.Node.Port)); err != nil {
 			logger.Errorf("failure connecting to node via TCP: %s", err)
 			c.String(500, "failure communicating with node")
+			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 			return
 		}
 	} else {
 		if err := oConn.Dial("unix", cfg.Node.SocketPath); err != nil {
 			logger.Errorf("failure connecting to node via UNIX socket: %s", err)
 			c.String(500, "failure communicating with node")
+			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 			return
 		}
 	}
@@ -153,6 +168,7 @@ func handleSubmitTx(c *gin.Context) {
 		if ok {
 			logger.Errorf("failure communicating with node: %s", err)
 			c.String(500, "failure communicating with node")
+			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 			doneChan <- true
 		}
 	}()
