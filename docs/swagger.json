@@ -1,0 +1,65 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Cardano Submit API",
+        "title": "go-cardano-submit-api",
+        "contact": {
+            "name": "CloudStruct",
+            "url": "https://cloudstruct.net",
+            "email": "support@cloudstruct.net"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "3.1.0"
+    },
+    "host": "localhost:8090",
+    "basePath": "/",
+    "paths": {
+        "/api/submit/tx": {
+            "post": {
+                "description": "Submit an already serialized transaction to the network.",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Submit Tx",
+                "parameters": [
+                    {
+                        "enum": [
+                            "application/cbor"
+                        ],
+                        "type": "string",
+                        "description": "Content type",
+                        "name": "Content-Type",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
