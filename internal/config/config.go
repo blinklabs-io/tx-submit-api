@@ -2,15 +2,11 @@ package config
 
 import (
 	"fmt"
+	"github.com/Bitrue-exchange/libada-go"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-)
-
-const (
-	TESTNET_MAGIC = 1097911063
-	MAINNET_MAGIC = 764824073
 )
 
 type Config struct {
@@ -108,9 +104,9 @@ func (c *Config) populateNetworkMagic() error {
 	if c.Node.Network != "" {
 		switch c.Node.Network {
 		case "testnet":
-			c.Node.NetworkMagic = TESTNET_MAGIC
+			c.Node.NetworkMagic = libada.Testnet.ProtocolMagic()
 		case "mainnet":
-			c.Node.NetworkMagic = MAINNET_MAGIC
+			c.Node.NetworkMagic = libada.Mainnet.ProtocolMagic()
 		default:
 			return fmt.Errorf("unknown network: %s", c.Node.Network)
 		}
