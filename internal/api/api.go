@@ -12,7 +12,7 @@ import (
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/penglongli/gin-metrics/ginmetrics"
-	swaggerFiles "github.com/swaggo/files" // swagger embed files
+	swaggerFiles "github.com/swaggo/files"     // swagger embed files
 	ginSwagger "github.com/swaggo/gin-swagger" // gin-swagger middleware
 	"golang.org/x/crypto/blake2b"
 	"io/ioutil"
@@ -34,7 +34,7 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 func Start(cfg *config.Config) error {
-	// Disable gin debug output
+	// Disable gin debug and color output
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
 
@@ -119,29 +119,38 @@ func handleHealthcheck(c *gin.Context) {
 // @Failure      500           {object}  string  "Server Error"
 // @Router       /api/submit/tx [post]
 func handleSubmitTx(c *gin.Context) {
+	// First, initialize our configuration and loggers
 	cfg := config.GetConfig()
 	logger := logging.GetLogger()
-	// Read transaction from request body
-	rawTx, err := ioutil.ReadAll(c.Request.Body)
+	// Read raw transaction bytes from the request body and store in a byte array
+	txRawBytes, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
+		// Log the error, return an error to the user, and increment failed count
 		logger.Errorf("failed to read request body: %s", err)
-		c.String(500, "failed to request body")
+		c.String(500, "failed to read request body")
 		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
+	// Close request body after read
 	if err := c.Request.Body.Close(); err != nil {
 		logger.Errorf("failed to close request body: %s", err)
 	}
-	// Unwrap transaction and calculate ID
+	// Unwrap raw transaction bytes into a CBOR array
 	var txUnwrap []cbor.RawMessage
-	if err := cbor.Unmarshal(rawTx, &txUnwrap); err != nil {
+	if err := cbor.Unmarshal(txRawBytes, &txUnwrap); err != nil {
 		logger.Errorf("failed to unwrap transaction CBOR: %s", err)
 		c.String(400, fmt.Sprintf("failed to unwrap transaction CBOR: %s", err))
 		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
-	txId := blake2b.Sum256(txUnwrap[0])
-	txIdHex := hex.EncodeToString(txId[:])
+	// index 0 is the transaction body
+	// Store index 0 (transaction body) as byte array
+	txBody := txUnwrap[0]
+
+	// Convert the body into a blake2b256 hash string
+	txIdHash := blake2b.Sum256(txBody)
+	// Encode hash string as byte array to hex string
+	txIdHex := hex.EncodeToString(txIdHash[:])
 	// Connect to cardano-node and submit TX
 	errorChan := make(chan error)
 	doneChan := make(chan bool)
@@ -206,7 +215,7 @@ func handleSubmitTx(c *gin.Context) {
 		}
 	}()
 	// TODO: figure out better way to determine era
-	if err = oConn.LocalTxSubmission.SubmitTx(block.TX_TYPE_ALONZO, rawTx); err != nil {
+	if err = oConn.LocalTxSubmission.SubmitTx(block.TX_TYPE_ALONZO, txRawBytes); err != nil {
 		logger.Errorf("failure submitting transaction: %s", err)
 		c.String(500, "failure communicating with node")
 		return
