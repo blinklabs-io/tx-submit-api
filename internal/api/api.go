@@ -38,7 +38,7 @@ func Start(cfg *config.Config) error {
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
 
-	// Configure router
+	// Configure API router
 	router := gin.New()
 	// Catch panics and return a 500
 	router.Use(gin.Recovery())
@@ -46,6 +46,8 @@ func Start(cfg *config.Config) error {
 	accessLogger := logging.GetAccessLogger()
 	router.Use(ginzap.Ginzap(accessLogger, "", true))
 	router.Use(ginzap.RecoveryWithZap(accessLogger, true))
+	// Standard logging
+	logger := logging.GetLogger()
 
 	// Create a healthcheck (before metrics so it's not instrumented)
 	router.GET("/healthcheck", handleHealthcheck)
@@ -55,10 +57,10 @@ func Start(cfg *config.Config) error {
 	// Metrics
 	metricsRouter := gin.New()
 	metrics := ginmetrics.GetMonitor()
-	// Set metrics router
-	metrics.Expose(metricsRouter)
 	// Set metrics path
 	metrics.SetMetricPath("/")
+	// Set metrics router
+	metrics.Expose(metricsRouter)
 	// Use metrics middleware without exposing path in main app router
 	metrics.UseWithoutExposingEndpoint(router)
 
@@ -84,6 +86,9 @@ func Start(cfg *config.Config) error {
 	// Start metrics listener
 	go func() {
 		// TODO: return error if we cannot initialize metrics
+		logger.Infof("starting metrics listener on %s:%d",
+			cfg.Metrics.ListenAddress,
+			cfg.Metrics.ListenPort)
 		_ = metricsRouter.Run(fmt.Sprintf("%s:%d",
 			cfg.Metrics.ListenAddress,
 			cfg.Metrics.ListenPort))
