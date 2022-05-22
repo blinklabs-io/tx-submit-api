@@ -37,7 +37,7 @@ type MetricsConfig struct {
 }
 
 type NodeConfig struct {
-	Network      string `yaml:"network" envconfig:"NETWORK"`
+	Network      string `yaml:"network" envconfig:"CARDANO_NETWORK"`
 	NetworkMagic uint32 `yaml:"networkMagic" envconfig:"CARDANO_NODE_NETWORK_MAGIC"`
 	Address      string `yaml:"address" envconfig:"CARDANO_NODE_ADDRESS"`
 	Port         uint   `yaml:"port" envconfig:"CARDANO_NODE_PORT"`
