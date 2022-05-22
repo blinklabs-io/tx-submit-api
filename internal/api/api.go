@@ -122,7 +122,7 @@ func handleSubmitTx(c *gin.Context) {
 	if err != nil {
 		// Log the error, return an error to the user, and increment failed count
 		logger.Errorf("failed to read request body: %s", err)
-		c.String(400, "failed to read request body")
+		c.String(500, "failed to read request body")
 		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
