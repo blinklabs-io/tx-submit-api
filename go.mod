@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Bitrue-exchange/libada-go v0.0.1-rc
-	github.com/cloudstruct/go-ouroboros-network v0.13.4
+	github.com/cloudstruct/go-ouroboros-network v0.14.0
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/gin-contrib/zap v0.0.2
 	github.com/gin-gonic/gin v1.7.7
