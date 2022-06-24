@@ -158,23 +158,6 @@ func handleSubmitTx(c *gin.Context) {
 		NetworkMagic:          uint32(cfg.Node.NetworkMagic),
 		ErrorChan:             errorChan,
 		UseNodeToNodeProtocol: false,
-		LocalTxSubmissionCallbackConfig: &localtxsubmission.CallbackConfig{
-			AcceptTxFunc: func() error {
-				// Return transaction ID
-				c.String(202, txIdHex)
-				doneChan <- true
-				// Increment custom metric
-				_ = ginmetrics.GetMonitor().GetMetric("tx_submit_count").Inc(nil)
-				return nil
-			},
-			RejectTxFunc: func(reason interface{}) error {
-				c.String(400, fmt.Sprintf("transaction rejected by node: %#v", reason))
-				doneChan <- true
-				// Increment custom metric
-				_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
-				return nil
-			},
-		},
 	}
 	oConn, err := ouroboros.New(oOpts)
 	defer func() {
@@ -214,6 +197,25 @@ func handleSubmitTx(c *gin.Context) {
 			doneChan <- true
 		}
 	}()
+	// Start local-tx-submission protocol
+	localTxSubmissionCallbackConfig := &localtxsubmission.CallbackConfig{
+		AcceptTxFunc: func() error {
+			// Return transaction ID
+			c.String(202, txIdHex)
+			doneChan <- true
+			// Increment custom metric
+			_ = ginmetrics.GetMonitor().GetMetric("tx_submit_count").Inc(nil)
+			return nil
+		},
+		RejectTxFunc: func(reason interface{}) error {
+			c.String(400, fmt.Sprintf("transaction rejected by node: %#v", reason))
+			doneChan <- true
+			// Increment custom metric
+			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+			return nil
+		},
+	}
+	oConn.LocalTxSubmission.Start(localTxSubmissionCallbackConfig)
 	// TODO: figure out better way to determine era
 	if err = oConn.LocalTxSubmission.SubmitTx(block.TX_TYPE_ALONZO, txRawBytes); err != nil {
 		logger.Errorf("failure submitting transaction: %s", err)
