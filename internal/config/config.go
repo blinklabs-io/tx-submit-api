@@ -103,6 +103,10 @@ func GetConfig() *Config {
 func (c *Config) populateNetworkMagic() error {
 	if c.Node.Network != "" {
 		switch c.Node.Network {
+		case "preview":
+			c.Node.NetworkMagic = libada.Preview.ProtocolMagic()
+		case "preprod":
+			c.Node.NetworkMagic = libada.Preprod.ProtocolMagic()
 		case "testnet":
 			c.Node.NetworkMagic = libada.Testnet.ProtocolMagic()
 		case "mainnet":
