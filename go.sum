@@ -33,6 +33,8 @@ cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/Bitrue-exchange/libada-go v0.0.1-rc h1:duA44UKnJvDDit+6/EKWbPYMV6bzfpA/ldwb3eqd+0Q=
 github.com/Bitrue-exchange/libada-go v0.0.1-rc/go.mod h1:dDA2Sx73XOqa1z7DZ32sgcJY5oAJGtFHwV++9HLpkNM=
+github.com/Bitrue-exchange/libada-go v0.0.1-rc.0.20220817020305-79d8b4c4dd9c h1:Ajxz1X2pRL/2wX6pIKgOCUUBGuHNBpJRSah6Xa5cOCI=
+github.com/Bitrue-exchange/libada-go v0.0.1-rc.0.20220817020305-79d8b4c4dd9c/go.mod h1:dDA2Sx73XOqa1z7DZ32sgcJY5oAJGtFHwV++9HLpkNM=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
