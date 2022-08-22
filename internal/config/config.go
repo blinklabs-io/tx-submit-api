@@ -106,7 +106,7 @@ func (c *Config) populateNetworkMagic() error {
 		case "preview":
 			c.Node.NetworkMagic = libada.Preview.ProtocolMagic()
 		case "preprod":
-			c.Node.NetworkMagic = libada.preprod.ProtocolMagic()
+			c.Node.NetworkMagic = libada.Preprod.ProtocolMagic()
 		case "testnet":
 			c.Node.NetworkMagic = libada.Testnet.ProtocolMagic()
 		case "mainnet":
