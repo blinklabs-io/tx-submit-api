@@ -23,7 +23,7 @@ import (
 // @title        go-cardano-submit-api
 // @version      3.1.0
 // @description  Cardano Submit API
-// @host         localhost:8090
+// @host         localhost
 // @Schemes      http
 // @BasePath     /
 
@@ -116,12 +116,21 @@ func handleHealthcheck(c *gin.Context) {
 // @Param        Content-Type  header    string  true  "Content type"  Enums(application/cbor)
 // @Success      202           {object}  string  "Ok"
 // @Failure      400           {object}  string  "Bad Request"
+// @Failure      415           {object}  string  "Unsupported Media Type"
 // @Failure      500           {object}  string  "Server Error"
 // @Router       /api/submit/tx [post]
 func handleSubmitTx(c *gin.Context) {
 	// First, initialize our configuration and loggers
 	cfg := config.GetConfig()
 	logger := logging.GetLogger()
+	// Check our headers for content-type
+	if c.ContentType() != "application/cbor" {
+		// Log the error, return an error to the user, and increment failed count
+		logger.Errorf("invalid request body, should be application/cbor")
+		c.String(415, "invalid request body, should be application/cbor")
+		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+		return
+	}
 	// Read raw transaction bytes from the request body and store in a byte array
 	txRawBytes, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
