@@ -126,7 +126,7 @@ func handleSubmitTx(c *gin.Context) {
 	// Check our headers for content-type
 	if c.ContentType() != "application/cbor" {
 		// Log the error, return an error to the user, and increment failed count
-		logger.Errorf("invalid request body, should be application/cbor, got: %s", c.ContentType())
+		logger.Errorf("invalid request body, should be application/cbor")
 		c.String(415, "invalid request body, should be application/cbor")
 		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
