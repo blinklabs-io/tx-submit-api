@@ -17,7 +17,7 @@
         },
         "version": "3.1.0"
     },
-    "host": "localhost:8090",
+    "host": "localhost",
     "basePath": "/",
     "paths": {
         "/api/submit/tx": {
@@ -48,6 +48,12 @@
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "415": {
+                        "description": "Unsupported Media Type",
                         "schema": {
                             "type": "string"
                         }

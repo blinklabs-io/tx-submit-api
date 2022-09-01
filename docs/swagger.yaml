@@ -1,10 +1,8 @@
 swagger: "2.0"
 schemes: ["http"]
-host: localhost:8090
+host: localhost
 basePath: /
 info:
-  title: go-cardano-submit-api
-  version: 3.1.0
   contact:
     email: support@cloudstruct.net
     name: CloudStruct
@@ -13,6 +11,8 @@ info:
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: go-cardano-submit-api
+  version: 3.1.0
 paths:
   /api/submit/tx:
     post:
@@ -35,6 +35,10 @@ paths:
             type: string
         "400":
           description: Bad Request
+          schema:
+            type: string
+        "415":
+          description: Unsupported Media Type
           schema:
             type: string
         "500":
