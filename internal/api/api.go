@@ -48,7 +48,7 @@ func Start(cfg *config.Config) error {
 	router.Use(ginzap.GinzapWithConfig(accessLogger, &ginzap.Config{
 		TimeFormat: time.RFC3339,
 		UTC: true,
-		SkipPaths: []string{"/healthcheck"}
+		SkipPaths: []string{"/healthcheck"},
 	}))
 	router.Use(ginzap.RecoveryWithZap(accessLogger, true))
 	// Standard logging
