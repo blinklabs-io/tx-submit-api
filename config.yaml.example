@@ -8,6 +8,11 @@ logging:
   # This can also be set via the LOGGING_LEVEL environment variable
   level: info
 
+  # Health checks
+  #
+  # This can also be set via the LOGGING_HEALTHCHECKS environment variable
+  healthchecks: false
+
 api:
   # Listen address for the API
   #

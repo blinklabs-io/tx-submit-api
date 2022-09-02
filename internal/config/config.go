@@ -18,7 +18,8 @@ type Config struct {
 }
 
 type LoggingConfig struct {
-	Level string `yaml:"level" envconfig:"LOGGING_LEVEL"`
+	Healthchecks bool   `yaml:"healthchecks" envconfig:"LOGGING_HEALTHCHECKS"`
+	Level        string `yaml:"level" envconfig:"LOGGING_LEVEL"`
 }
 
 type ApiConfig struct {
@@ -47,7 +48,8 @@ type NodeConfig struct {
 // Singleton config instance with default values
 var globalConfig = &Config{
 	Logging: LoggingConfig{
-		Level: "info",
+		Level:        "info",
+		Healthchecks: false,
 	},
 	Api: ApiConfig{
 		ListenAddress:  "",
