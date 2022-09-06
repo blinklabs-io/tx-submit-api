@@ -226,8 +226,13 @@ func handleSubmitTx(c *gin.Context) {
 			_ = ginmetrics.GetMonitor().GetMetric("tx_submit_count").Inc(nil)
 			return nil
 		},
-		RejectTxFunc: func(reason interface{}) error {
-			c.String(400, fmt.Sprintf("transaction rejected by node: %#v", reason))
+		RejectTxFunc: func(reasonCbor []byte) error {
+			var reason interface{}
+			if err := cbor.Unmarshal(reasonCbor, &reason); err == nil {
+				c.String(400, fmt.Sprintf("transaction rejected by node: %v (raw CBOR: %x)", reason, reasonCbor))
+			} else {
+				c.String(400, fmt.Sprintf("transaction rejected by node, but the 'reason' data could not be parsed (raw CBOR: %x)", reasonCbor))
+			}
 			doneChan <- true
 			// Increment custom metric
 			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
