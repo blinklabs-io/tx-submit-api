@@ -3,10 +3,10 @@ package api
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/cloudstruct/go-cardano-ledger"
 	"github.com/cloudstruct/go-cardano-submit-api/internal/config"
 	"github.com/cloudstruct/go-cardano-submit-api/internal/logging"
 	ouroboros "github.com/cloudstruct/go-ouroboros-network"
-	"github.com/cloudstruct/go-ouroboros-network/block"
 	"github.com/cloudstruct/go-ouroboros-network/protocol/localtxsubmission"
 	"github.com/fxamacker/cbor/v2"
 	ginzap "github.com/gin-contrib/zap"
@@ -54,8 +54,8 @@ func Start(cfg *config.Config) error {
 	}
 	router.Use(ginzap.GinzapWithConfig(accessLogger, &ginzap.Config{
 		TimeFormat: time.RFC3339,
-		UTC: true,
-		SkipPaths: skipPaths,
+		UTC:        true,
+		SkipPaths:  skipPaths,
 	}))
 	router.Use(ginzap.RecoveryWithZap(accessLogger, true))
 
@@ -235,12 +235,44 @@ func handleSubmitTx(c *gin.Context) {
 		},
 	}
 	oConn.LocalTxSubmission.Start(localTxSubmissionCallbackConfig)
-	// TODO: figure out better way to determine era
-	if err = oConn.LocalTxSubmission.SubmitTx(block.TX_TYPE_ALONZO, txRawBytes); err != nil {
+	// Determine transaction type (era)
+	txType, err := determineTransactionType(txRawBytes)
+	if err != nil {
+		c.String(400, "could not parse transaction to determine type")
+		return
+	}
+	// Submit the transaction
+	if err := oConn.LocalTxSubmission.SubmitTx(txType, txRawBytes); err != nil {
 		logger.Errorf("failure submitting transaction: %s", err)
 		c.String(500, "failure communicating with node")
 		return
 	}
 	// Wait for async process to finish
 	<-doneChan
+}
+
+func determineTransactionType(data []byte) (uint16, error) {
+	// TODO: uncomment this once the following issue is resolved:
+	// https://github.com/cloudstruct/go-cardano-ledger/issues/9
+	/*
+		if _, err := ledger.NewByronTransactionFromCbor(data); err == nil {
+			return ledger.TX_TYPE_BYRON, nil
+		}
+	*/
+	if _, err := ledger.NewShelleyTransactionFromCbor(data); err == nil {
+		return ledger.TX_TYPE_SHELLEY, nil
+	}
+	if _, err := ledger.NewAllegraTransactionFromCbor(data); err == nil {
+		return ledger.TX_TYPE_ALLEGRA, nil
+	}
+	if _, err := ledger.NewMaryTransactionFromCbor(data); err == nil {
+		return ledger.TX_TYPE_MARY, nil
+	}
+	if _, err := ledger.NewAlonzoTransactionFromCbor(data); err == nil {
+		return ledger.TX_TYPE_ALONZO, nil
+	}
+	if _, err := ledger.NewBabbageTransactionFromCbor(data); err == nil {
+		return ledger.TX_TYPE_BABBAGE, nil
+	}
+	return 0, fmt.Errorf("unknown transaction type")
 }

@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/Bitrue-exchange/libada-go v0.0.1-rc.0.20220817020305-79d8b4c4dd9c
+	github.com/cloudstruct/go-cardano-ledger v0.2.1
 	github.com/cloudstruct/go-ouroboros-network v0.14.0
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/gin-contrib/zap v0.0.2
