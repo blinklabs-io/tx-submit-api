@@ -43,16 +43,21 @@ func Start(cfg *config.Config) error {
 	router := gin.New()
 	// Catch panics and return a 500
 	router.Use(gin.Recovery())
+	// Standard logging
+	logger := logging.GetLogger()
 	// Access logging
 	accessLogger := logging.GetAccessLogger()
+	skipPaths := []string{}
+	if cfg.Logging.Healthchecks {
+		skipPaths = append(skipPaths, "/healthcheck")
+		logger.Infof("disabling access logs for /healthcheck")
+	}
 	router.Use(ginzap.GinzapWithConfig(accessLogger, &ginzap.Config{
 		TimeFormat: time.RFC3339,
 		UTC: true,
-		SkipPaths: []string{"/healthcheck"},
+		SkipPaths: skipPaths,
 	}))
 	router.Use(ginzap.RecoveryWithZap(accessLogger, true))
-	// Standard logging
-	logger := logging.GetLogger()
 
 	// Create a healthcheck (before metrics so it's not instrumented)
 	router.GET("/healthcheck", handleHealthcheck)
