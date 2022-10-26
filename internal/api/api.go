@@ -137,7 +137,7 @@ func handleSubmitTx(c *gin.Context) {
 	if c.ContentType() != "application/cbor" {
 		// Log the error, return an error to the user, and increment failed count
 		logger.Errorf("invalid request body, should be application/cbor")
-		c.String(415, "invalid request body, should be application/cbor")
+		c.Data(415, "application/json", []byte("invalid request body, should be application/cbor"))
 		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
@@ -146,7 +146,7 @@ func handleSubmitTx(c *gin.Context) {
 	if err != nil {
 		// Log the error, return an error to the user, and increment failed count
 		logger.Errorf("failed to read request body: %s", err)
-		c.String(500, "failed to read request body")
+		c.Data(500, "application/json", []byte("failed to read request body"))
 		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
@@ -158,7 +158,7 @@ func handleSubmitTx(c *gin.Context) {
 	var txUnwrap []cbor.RawMessage
 	if err := cbor.Unmarshal(txRawBytes, &txUnwrap); err != nil {
 		logger.Errorf("failed to unwrap transaction CBOR: %s", err)
-		c.String(400, fmt.Sprintf("failed to unwrap transaction CBOR: %s", err))
+		c.Data(400, "application/json", []byte(fmt.Sprintf("failed to unwrap transaction CBOR: %s", err)))
 		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
@@ -187,21 +187,21 @@ func handleSubmitTx(c *gin.Context) {
 	}()
 	if err != nil {
 		logger.Errorf("failure creating Ouroboros connection: %s", err)
-		c.String(500, "failure communicating with node")
+		c.Data(500, "application/json", []byte("failure communicating with node"))
 		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 		return
 	}
 	if cfg.Node.Address != "" && cfg.Node.Port > 0 {
 		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", cfg.Node.Address, cfg.Node.Port)); err != nil {
 			logger.Errorf("failure connecting to node via TCP: %s", err)
-			c.String(500, "failure communicating with node")
+			c.Data(500, "application/json", []byte("failure communicating with node"))
 			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 			return
 		}
 	} else {
 		if err := oConn.Dial("unix", cfg.Node.SocketPath); err != nil {
 			logger.Errorf("failure connecting to node via UNIX socket: %s", err)
-			c.String(500, "failure communicating with node")
+			c.Data(500, "application/json", []byte("failure communicating with node"))
 			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 			return
 		}
@@ -211,7 +211,7 @@ func handleSubmitTx(c *gin.Context) {
 		err, ok := <-errorChan
 		if ok {
 			logger.Errorf("failure communicating with node: %s", err)
-			c.String(500, "failure communicating with node")
+			c.Data(500, "application/json", []byte("failure communicating with node"))
 			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
 			doneChan <- true
 		}
@@ -220,7 +220,7 @@ func handleSubmitTx(c *gin.Context) {
 	localTxSubmissionCallbackConfig := &localtxsubmission.CallbackConfig{
 		AcceptTxFunc: func() error {
 			// Return transaction ID
-			c.String(202, txIdHex)
+			c.Data(202, "application/json", []byte(txIdHex))
 			doneChan <- true
 			// Increment custom metric
 			_ = ginmetrics.GetMonitor().GetMetric("tx_submit_count").Inc(nil)
@@ -229,9 +229,9 @@ func handleSubmitTx(c *gin.Context) {
 		RejectTxFunc: func(reasonCbor []byte) error {
 			var reason interface{}
 			if err := cbor.Unmarshal(reasonCbor, &reason); err == nil {
-				c.String(400, fmt.Sprintf("transaction rejected by node: %v (raw CBOR: %x)", reason, reasonCbor))
+				c.Data(400, "application/json", []byte(fmt.Sprintf("transaction rejected by node: %v (raw CBOR: %x)", reason, reasonCbor)))
 			} else {
-				c.String(400, fmt.Sprintf("transaction rejected by node, but the 'reason' data could not be parsed (raw CBOR: %x)", reasonCbor))
+				c.Data(400, "application/json", []byte(fmt.Sprintf("transaction rejected by node, but the 'reason' data could not be parsed (raw CBOR: %x)", reasonCbor)))
 			}
 			doneChan <- true
 			// Increment custom metric
@@ -243,13 +243,13 @@ func handleSubmitTx(c *gin.Context) {
 	// Determine transaction type (era)
 	txType, err := determineTransactionType(txRawBytes)
 	if err != nil {
-		c.String(400, "could not parse transaction to determine type")
+		c.Data(400, "application/json", []byte("could not parse transaction to determine type"))
 		return
 	}
 	// Submit the transaction
 	if err := oConn.LocalTxSubmission.SubmitTx(txType, txRawBytes); err != nil {
 		logger.Errorf("failure submitting transaction: %s", err)
-		c.String(500, "failure communicating with node")
+		c.Data(500, "application/json", []byte("failure communicating with node"))
 		return
 	}
 	// Wait for async process to finish
