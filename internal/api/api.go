@@ -78,7 +78,7 @@ func Start(cfg *config.Config) error {
 	failureMetric := &ginmetrics.Metric{
 		// This is a Gauge because input-output-hk's is a gauge
 		Type:        ginmetrics.Gauge,
-		Name:        "tx_failure_count",
+		Name:        "tx_submit_fail_count",
 		Description: "transactions failed",
 		Labels:      nil,
 	}
@@ -138,7 +138,7 @@ func handleSubmitTx(c *gin.Context) {
 		// Log the error, return an error to the user, and increment failed count
 		logger.Errorf("invalid request body, should be application/cbor")
 		c.Data(415, "application/json", []byte("invalid request body, should be application/cbor"))
-		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+		_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 		return
 	}
 	// Read raw transaction bytes from the request body and store in a byte array
@@ -147,7 +147,7 @@ func handleSubmitTx(c *gin.Context) {
 		// Log the error, return an error to the user, and increment failed count
 		logger.Errorf("failed to read request body: %s", err)
 		c.Data(500, "application/json", []byte("failed to read request body"))
-		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+		_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 		return
 	}
 	// Close request body after read
@@ -159,7 +159,7 @@ func handleSubmitTx(c *gin.Context) {
 	if err := cbor.Unmarshal(txRawBytes, &txUnwrap); err != nil {
 		logger.Errorf("failed to unwrap transaction CBOR: %s", err)
 		c.Data(400, "application/json", []byte(fmt.Sprintf("failed to unwrap transaction CBOR: %s", err)))
-		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+		_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 		return
 	}
 	// index 0 is the transaction body
@@ -188,21 +188,21 @@ func handleSubmitTx(c *gin.Context) {
 	if err != nil {
 		logger.Errorf("failure creating Ouroboros connection: %s", err)
 		c.Data(500, "application/json", []byte("failure communicating with node"))
-		_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+		_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 		return
 	}
 	if cfg.Node.Address != "" && cfg.Node.Port > 0 {
 		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", cfg.Node.Address, cfg.Node.Port)); err != nil {
 			logger.Errorf("failure connecting to node via TCP: %s", err)
 			c.Data(500, "application/json", []byte("failure communicating with node"))
-			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+			_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 			return
 		}
 	} else {
 		if err := oConn.Dial("unix", cfg.Node.SocketPath); err != nil {
 			logger.Errorf("failure connecting to node via UNIX socket: %s", err)
 			c.Data(500, "application/json", []byte("failure communicating with node"))
-			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+			_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 			return
 		}
 	}
@@ -212,7 +212,7 @@ func handleSubmitTx(c *gin.Context) {
 		if ok {
 			logger.Errorf("failure communicating with node: %s", err)
 			c.Data(500, "application/json", []byte("failure communicating with node"))
-			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+			_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 			doneChan <- true
 		}
 	}()
@@ -235,7 +235,7 @@ func handleSubmitTx(c *gin.Context) {
 			}
 			doneChan <- true
 			// Increment custom metric
-			_ = ginmetrics.GetMonitor().GetMetric("tx_failure_count").Inc(nil)
+			_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 			return nil
 		},
 	}
