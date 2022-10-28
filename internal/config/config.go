@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/Bitrue-exchange/libada-go"
+	ouroboros "github.com/cloudstruct/go-ouroboros-network"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -121,8 +122,29 @@ func (c *Config) populateNetworkMagic() error {
 }
 
 func (c *Config) checkNode() error {
+	// Connect to cardano-node
+	errorChan := make(chan error)
+	oOpts := &ouroboros.OuroborosOptions{
+		NetworkMagic:          uint32(c.Node.NetworkMagic),
+		ErrorChan:             errorChan,
+		UseNodeToNodeProtocol: false,
+	}
+	oConn, err := ouroboros.New(oOpts)
+	defer func() {
+		// We have to close the channel to break out of the async error handler goroutine
+		close(errorChan)
+		// Close Ouroboros connection
+		oConn.Close()
+	}()
+	if err != nil {
+		return fmt.Errorf("failure creating Ouroboros connection: %s", err)
+	}
+
 	if c.Node.Address != "" && c.Node.Port > 0 {
-		// TODO: add some validation for node address/port
+		// Connect to TCP port
+		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", c.Node.Address, c.Node.Port)); err != nil {
+			return fmt.Errorf("failure connecting to node via TCP: %s", err)
+		}
 	} else if c.Node.SocketPath != "" {
 		// Check that node socket path exists
 		if _, err := os.Stat(c.Node.SocketPath); err != nil {
@@ -131,6 +153,9 @@ func (c *Config) checkNode() error {
 			} else {
 				return fmt.Errorf("unknown error checking if node socket path exists: %s", err)
 			}
+		}
+		if err := oConn.Dial("unix", c.Node.SocketPath); err != nil {
+			return fmt.Errorf("failure connecting to node via UNIX socket: %s", err)
 		}
 	} else {
 		return fmt.Errorf("you must specify either the UNIX socket path or the address/port for your cardano-node")
