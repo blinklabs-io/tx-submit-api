@@ -227,11 +227,15 @@ func handleSubmitTx(c *gin.Context) {
 			return nil
 		},
 		RejectTxFunc: func(reasonCbor []byte) error {
-			var reason interface{}
-			if err := cbor.Unmarshal(reasonCbor, &reason); err == nil {
-				c.JSON(400, fmt.Sprintf("transaction rejected by node: %v (raw CBOR: %x)", reason, reasonCbor))
+			if c.GetHeader("Accept") == "application/cbor" {
+				c.Data(400, "application/cbor", reasonCbor)
 			} else {
-				c.JSON(400, fmt.Sprintf("transaction rejected by node, but the 'reason' data could not be parsed (raw CBOR: %x)", reasonCbor))
+				var reason interface{}
+				if err := cbor.Unmarshal(reasonCbor, &reason); err == nil {
+					c.JSON(400, fmt.Sprintf("transaction rejected by node: %v (raw CBOR: %x)", reason, reasonCbor))
+				} else {
+					c.JSON(400, fmt.Sprintf("transaction rejected by node, but the 'reason' data could not be parsed (raw CBOR: %x)", reasonCbor))
+				}
 			}
 			doneChan <- true
 			// Increment custom metric
