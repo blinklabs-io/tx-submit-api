@@ -1,0 +1,37 @@
+name: publish
+
+on:
+  release:
+    types: [created]
+
+concurrency: ${{ github.ref }}
+
+env:
+  BIN_NAME: cardano-submit-api
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
+        goos: [linux, windows, darwin]
+        goarch: ["386", amd64, arm64]
+        exclude:
+          - goarch: "386"
+            goos: darwin
+          - goarch: arm64
+            goos: windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: wangyoucao577/go-release-action@v1.34
+        with:
+          binary_name: ${{ env.BIN_NAME }}
+          build_command: 'make build'
+          compress_assets: OFF
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goarch: ${{ matrix.goarch }}
+          goos: ${{ matrix.goos }}
+          goversion: 1.18
+          md5sum: FALSE
+          sha256sum: TRUE
