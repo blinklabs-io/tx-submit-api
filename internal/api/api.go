@@ -230,9 +230,8 @@ func handleSubmitTx(c *gin.Context) {
 			if c.GetHeader("Accept") == "application/cbor" {
 				c.Data(400, "application/cbor", reasonCbor)
 			} else {
-				var reason interface{}
-				if err := cbor.Unmarshal(reasonCbor, &reason); err == nil {
-					c.JSON(400, fmt.Sprintf("transaction rejected by node: %v (raw CBOR: %x)", reason, reasonCbor))
+				if reason, err := ledger.NewTxSubmitErrorFromCbor(reasonCbor); err == nil {
+					c.JSON(400, reason)
 				} else {
 					c.JSON(400, fmt.Sprintf("transaction rejected by node, but the 'reason' data could not be parsed (raw CBOR: %x)", reasonCbor))
 				}
