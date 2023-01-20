@@ -10,7 +10,13 @@ The recommended method of using this application is via the published
 container images.
 
 ```
-docker run -p 8090 ghcr.io/cloudstruct/cardano-submit-api:0.4.0
+docker run -p 8090 ghcr.io/cloudstruct/cardano-submit-api:0.10.0
+```
+
+Binaries can be executed directly.
+
+```
+./cardano-submit-api
 ```
 
 ### Configuration
@@ -59,3 +65,45 @@ Cardano node configuration:
    (default: unset)
 - `CARDANO_NODE_SOCKET_TCP_PORT` - Port to Cardano node NtC via TCP (default:
     unset)
+
+### Together with cloudstruct/cardano-node in Docker
+
+```
+# Start node
+docker run --detach \
+  --name cardano-node \
+  -v node-data:/opt/cardano/data \
+  -v node-ipc:/opt/cardano/ipc \
+  -p 3001:3001 \
+  ghcr.io/cloudstruct/cardano-node run
+
+# Start submit-api
+docker run --detach \
+  --name cardano-submit-api
+  -v node-ipc:/node-ipc \
+  -p 8090:8090 \
+  ghcr.io/cloudstruct/cardano-submit-api
+```
+
+You can then send transactions.
+
+```
+curl -X POST \
+  --header "Content-Type: application/cbor" \
+  -d @tx.signed.cbor \
+  http://localhost:8090/api/submit/tx
+```
+
+## Development
+
+There is a Makefile to provide some simple helpers.
+
+Create a binary:
+```
+make
+```
+
+Create a docker image:
+```
+make image
+```
