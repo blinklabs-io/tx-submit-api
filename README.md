@@ -10,7 +10,7 @@ The recommended method of using this application is via the published
 container images.
 
 ```
-docker run -p 8090 ghcr.io/cloudstruct/cardano-submit-api:0.10.0
+docker run -p 8090 ghcr.io/cloudstruct/cardano-submit-api:0.11.0
 ```
 
 Binaries can be executed directly.
@@ -66,7 +66,17 @@ Cardano node configuration:
 - `CARDANO_NODE_SOCKET_TCP_PORT` - Port to Cardano node NtC via TCP (default:
     unset)
 
-### Together with cloudstruct/cardano-node in Docker
+### Connecting to a cardano-node
+
+You can connect to either a cardano-node running locally on the host or a
+container running either `inputoutput/cardano-node` or
+`cloudstruct/cardano-node` by mapping in the correct paths and setting the
+environment variables or configuration options to match.
+
+#### Together with cloudstruct/cardano-node in Docker
+
+Use Docker to run both cardano-node and go-cardano-submit-api with Docker
+volumes for blockchain storage and node-ipc.
 
 ```
 # Start node
@@ -85,12 +95,31 @@ docker run --detach \
   ghcr.io/cloudstruct/cardano-submit-api
 ```
 
-You can then send transactions.
+#### Using a local cardano-node
+
+Use the local path when mapping the node-ipc volume into the container to use
+a local cardano-node.
 
 ```
+# Start submit-api
+docker run --detach \
+  --name cardano-submit-api \
+  -v /opt/cardano/ipc:/node-ipc \
+  -p 8090:8090 \
+  ghcr.io/cloudstruct/cardano-submit-api
+```
+
+### Sending transactions
+
+This implementation shares an API spec with IOHK's Haskell implementation. The
+same instructions apply. Follow the steps to
+[build and submit a transaction](https://github.com/input-output-hk/cardano-node/tree/master/cardano-submit-api#build-and-submit-a-transaction)
+
+```
+# Submit a binary tx.signed.cbor signed CBOR encoded transaction binary file
 curl -X POST \
   --header "Content-Type: application/cbor" \
-  -d @tx.signed.cbor \
+  --data-binary @tx.signed.cbor \
   http://localhost:8090/api/submit/tx
 ```
 
