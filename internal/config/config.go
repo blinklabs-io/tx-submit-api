@@ -23,8 +23,8 @@ type LoggingConfig struct {
 }
 
 type ApiConfig struct {
-	ListenAddress  string `yaml:"address" envconfig:"API_LISTEN_ADDRESS"`
-	ListenPort     uint   `yaml:"port" envconfig:"API_LISTEN_PORT"`
+	ListenAddress string `yaml:"address" envconfig:"API_LISTEN_ADDRESS"`
+	ListenPort    uint   `yaml:"port" envconfig:"API_LISTEN_PORT"`
 }
 
 type DebugConfig struct {
@@ -52,8 +52,8 @@ var globalConfig = &Config{
 		Healthchecks: false,
 	},
 	Api: ApiConfig{
-		ListenAddress:  "",
-		ListenPort:     8090,
+		ListenAddress: "",
+		ListenPort:    8090,
 	},
 	Debug: DebugConfig{
 		ListenAddress: "localhost",
@@ -122,19 +122,10 @@ func (c *Config) populateNetworkMagic() error {
 
 func (c *Config) checkNode() error {
 	// Connect to cardano-node
-	errorChan := make(chan error)
-	oOpts := &ouroboros.OuroborosOptions{
-		NetworkMagic:          uint32(c.Node.NetworkMagic),
-		ErrorChan:             errorChan,
-		UseNodeToNodeProtocol: false,
-	}
-	oConn, err := ouroboros.New(oOpts)
-	defer func() {
-		// We have to close the channel to break out of the async error handler goroutine
-		close(errorChan)
-		// Close Ouroboros connection
-		oConn.Close()
-	}()
+	oConn, err := ouroboros.New(
+		ouroboros.WithNetworkMagic(uint32(c.Node.NetworkMagic)),
+		ouroboros.WithNodeToNode(false),
+	)
 	if err != nil {
 		return fmt.Errorf("failure creating Ouroboros connection: %s", err)
 	}
@@ -159,5 +150,7 @@ func (c *Config) checkNode() error {
 	} else {
 		return fmt.Errorf("you must specify either the UNIX socket path or the address/port for your cardano-node")
 	}
+	// Close Ouroboros connection
+	oConn.Close()
 	return nil
 }
