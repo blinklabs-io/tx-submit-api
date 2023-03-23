@@ -1,9 +1,9 @@
-FROM golang:1.18 AS build
+FROM cgr.dev/chainguard/go:1.19 AS build
 
 WORKDIR /code
 COPY . .
 RUN make build
 
-FROM ubuntu:focal AS final
-COPY --from=build /code/cardano-submit-api /usr/local/bin/
-ENTRYPOINT ["/usr/local/bin/cardano-submit-api"]
+FROM cgr.dev/chainguard/glibc-dynamic AS cardano-submit-api
+COPY --from=build /code/cardano-submit-api /bin/
+ENTRYPOINT ["/bin/cardano-submit-api"]

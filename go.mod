@@ -1,6 +1,6 @@
 module github.com/cloudstruct/go-cardano-submit-api
 
-go 1.18
+go 1.19
 
 require (
 	github.com/Bitrue-exchange/libada-go v0.0.1-rc.0.20220817020305-79d8b4c4dd9c
