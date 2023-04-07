@@ -1,11 +1,12 @@
 package logging
 
 import (
-	"github.com/cloudstruct/go-cardano-submit-api/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"log"
 	"time"
+
+	"github.com/blinklabs-io/tx-submit-api/internal/config"
 )
 
 type Logger = zap.SugaredLogger

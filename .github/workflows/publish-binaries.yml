@@ -7,7 +7,7 @@ on:
 concurrency: ${{ github.ref }}
 
 env:
-  BIN_NAME: cardano-submit-api
+  BIN_NAME: tx-submit-api
 
 jobs:
   release:

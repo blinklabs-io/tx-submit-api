@@ -1,5 +1,5 @@
 ---
-# Example config file for cardano-submit-api
+# Example config file for tx-submit-api
 # The values shown below correspond to the in-code defaults
 
 logging:

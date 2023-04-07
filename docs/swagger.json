@@ -4,20 +4,19 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "Cardano Submit API",
-        "title": "go-cardano-submit-api",
+        "description": "Cardano Transaction Submit API",
+        "title": "tx-submit-api",
         "contact": {
-            "name": "CloudStruct",
-            "url": "https://cloudstruct.net",
-            "email": "support@cloudstruct.net"
+            "name": "Blink Labs",
+            "url": "https://blinklabs.io",
+            "email": "support@blinklabs.io"
         },
         "license": {
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "3.1.0"
+        "version": "v0"
     },
-    "host": "localhost",
     "basePath": "/",
     "paths": {
         "/api/submit/tx": {

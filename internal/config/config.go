@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/Bitrue-exchange/libada-go"
-	ouroboros "github.com/cloudstruct/go-ouroboros-network"
+	ouroboros "github.com/blinklabs-io/gouroboros"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
 	"os"

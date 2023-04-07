@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: cloudstruct/cardano-submit-api
+  IMAGE_NAME: blinklabs-io/tx-submit-api
 
 jobs:
   docker:

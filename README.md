@@ -1,4 +1,5 @@
-# go-cardano-submit-api
+# tx-submit-api
+
 Cardano Transaction Submission API
 
 A simple HTTP API which accepts a CBOR encoded Cardano transaction as a
@@ -10,13 +11,13 @@ The recommended method of using this application is via the published
 container images.
 
 ```
-docker run -p 8090 ghcr.io/cloudstruct/cardano-submit-api:0.11.0
+docker run -p 8090 ghcr.io/blinklabs-io/tx-submit-api:0.11.0
 ```
 
 Binaries can be executed directly.
 
 ```
-./cardano-submit-api
+./tx-submit-api
 ```
 
 ### Configuration
@@ -70,12 +71,12 @@ Cardano node configuration:
 
 You can connect to either a cardano-node running locally on the host or a
 container running either `inputoutput/cardano-node` or
-`cloudstruct/cardano-node` by mapping in the correct paths and setting the
+`blinklabs-io/cardano-node` by mapping in the correct paths and setting the
 environment variables or configuration options to match.
 
-#### Together with cloudstruct/cardano-node in Docker
+#### Together with blinklabs-io/cardano-node in Docker
 
-Use Docker to run both cardano-node and go-cardano-submit-api with Docker
+Use Docker to run both cardano-node and tx-submit-api with Docker
 volumes for blockchain storage and node-ipc.
 
 ```
@@ -85,14 +86,14 @@ docker run --detach \
   -v node-data:/opt/cardano/data \
   -v node-ipc:/opt/cardano/ipc \
   -p 3001:3001 \
-  ghcr.io/cloudstruct/cardano-node run
+  ghcr.io/blinklabs-io/cardano-node run
 
 # Start submit-api
 docker run --detach \
-  --name cardano-submit-api
+  --name tx-submit-api
   -v node-ipc:/node-ipc \
   -p 8090:8090 \
-  ghcr.io/cloudstruct/cardano-submit-api
+  ghcr.io/blinklabs-io/tx-submit-api
 ```
 
 #### Using a local cardano-node
@@ -103,10 +104,10 @@ a local cardano-node.
 ```
 # Start submit-api
 docker run --detach \
-  --name cardano-submit-api \
+  --name tx-submit-api \
   -v /opt/cardano/ipc:/node-ipc \
   -p 8090:8090 \
-  ghcr.io/cloudstruct/cardano-submit-api
+  ghcr.io/blinklabs-io/tx-submit-api
 ```
 
 ### Sending transactions

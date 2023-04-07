@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/cloudstruct/go-cardano-submit-api/internal/api"
-	"github.com/cloudstruct/go-cardano-submit-api/internal/config"
-	"github.com/cloudstruct/go-cardano-submit-api/internal/logging"
+	"github.com/blinklabs-io/tx-submit-api/internal/api"
+	"github.com/blinklabs-io/tx-submit-api/internal/config"
+	"github.com/blinklabs-io/tx-submit-api/internal/logging"
 	"net/http"
 	_ "net/http/pprof"
 	"os"

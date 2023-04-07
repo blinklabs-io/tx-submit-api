@@ -8,7 +8,7 @@ on:
 concurrency: ${{ github.ref }}
 
 env:
-  IMAGE_NAME: cloudstruct/cardano-submit-api
+  IMAGE_NAME: blinklabs/tx-submit-api
 
 jobs:
   build-and-push-image:
@@ -37,7 +37,7 @@ jobs:
         with:
           images: |
             ${{ env.IMAGE_NAME }}
-            ghcr.io/${{ env.IMAGE_NAME }}
+            ghcr.io/${{ github.repository }}
           tags: |
             # Only version, no revision
             type=match,pattern=v(.*)-(.*),group=1
