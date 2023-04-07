@@ -1,22 +1,18 @@
-swagger: "2.0"
-schemes: ["http"]
-host: localhost
 basePath: /
 info:
   contact:
-    email: support@cloudstruct.net
-    name: CloudStruct
-    url: https://cloudstruct.net
-  description: Cardano Submit API
+    email: support@blinklabs.io
+    name: Blink Labs
+    url: https://blinklabs.io
+  description: Cardano Transaction Submit API
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: go-cardano-submit-api
-  version: 3.1.0
+  title: tx-submit-api
+  version: v0
 paths:
   /api/submit/tx:
     post:
-      summary: Submit Tx
       description: Submit an already serialized transaction to the network.
       parameters:
       - description: Content type
@@ -45,3 +41,7 @@ paths:
           description: Server Error
           schema:
             type: string
+      summary: Submit Tx
+schemes:
+- http
+swagger: "2.0"

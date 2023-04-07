@@ -1,4 +1,4 @@
-BINARY=cardano-submit-api
+BINARY=tx-submit-api
 
 # Determine root directory
 ROOT_DIR=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -22,6 +22,10 @@ build: $(BINARY)
 
 clean:
 	rm -f $(BINARY)
+
+swagger:
+	swag f -g api.go -d internal/api
+	swag i -g api.go -d internal/api
 
 # Build docker image
 image: build

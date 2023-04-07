@@ -4,6 +4,6 @@ WORKDIR /code
 COPY . .
 RUN make build
 
-FROM cgr.dev/chainguard/glibc-dynamic AS cardano-submit-api
-COPY --from=build /code/cardano-submit-api /bin/
-ENTRYPOINT ["/bin/cardano-submit-api"]
+FROM cgr.dev/chainguard/glibc-dynamic AS tx-submit-api
+COPY --from=build /code/tx-submit-api /bin/
+ENTRYPOINT ["tx-submit-api"]

@@ -1,11 +1,10 @@
-module github.com/cloudstruct/go-cardano-submit-api
+module github.com/blinklabs-io/tx-submit-api
 
 go 1.19
 
 require (
 	github.com/Bitrue-exchange/libada-go v0.0.1-rc.0.20220817020305-79d8b4c4dd9c
-	github.com/cloudstruct/go-cardano-ledger v0.4.0
-	github.com/cloudstruct/go-ouroboros-network v0.27.0
+	github.com/blinklabs-io/gouroboros v0.33.3
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/gin-contrib/zap v0.0.2
 	github.com/gin-gonic/gin v1.8.1
@@ -35,6 +34,7 @@ require (
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/islishude/base58 v1.0.1 // indirect
+	github.com/jinzhu/copier v0.3.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
