@@ -11,7 +11,7 @@ The recommended method of using this application is via the published
 container images.
 
 ```
-docker run -p 8090 ghcr.io/blinklabs-io/tx-submit-api:0.11.0
+docker run -p 8090 ghcr.io/blinklabs-io/tx-submit-api
 ```
 
 Binaries can be executed directly.
