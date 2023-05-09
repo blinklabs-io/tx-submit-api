@@ -80,3 +80,9 @@ node:
   # CARDANO_NODE_SOCKET_TCP_PORT environment variables
   address:
   port:
+
+  # Timeout for connections to cardano-node
+  #
+  # This can also be set via the CARDANO_NODE_SOCKET_TIMEOUT environment
+  # variable
+  timeout:
