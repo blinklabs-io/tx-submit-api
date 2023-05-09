@@ -179,7 +179,7 @@ func handleSubmitTx(c *gin.Context) {
 		ouroboros.WithNodeToNode(false),
 		ouroboros.WithLocalTxSubmissionConfig(
 			localtxsubmission.NewConfig(
-				localtxsubmission.WithTimeout(5*time.Second),
+				localtxsubmission.WithTimeout(time.Duration(cfg.Node.Timeout)*time.Second),
 			),
 		),
 	)
