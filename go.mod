@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/Bitrue-exchange/libada-go v0.0.1-rc.0.20220817020305-79d8b4c4dd9c
-	github.com/blinklabs-io/gouroboros v0.38.2
+	github.com/blinklabs-io/gouroboros v0.38.4
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/gin-contrib/zap v0.0.2
 	github.com/gin-gonic/gin v1.9.0
