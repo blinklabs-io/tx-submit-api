@@ -10,7 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.9.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/penglongli/gin-metrics v0.1.10
-	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
+	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.5.2
 	github.com/swaggo/swag v1.8.5
 	go.uber.org/zap v1.21.0
