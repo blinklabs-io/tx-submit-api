@@ -124,7 +124,7 @@ func (c *Config) populateNetworkMagic() error {
 
 func (c *Config) checkNode() error {
 	// Connect to cardano-node
-	oConn, err := ouroboros.New(
+	oConn, err := ouroboros.NewConnection(
 		ouroboros.WithNetworkMagic(uint32(c.Node.NetworkMagic)),
 		ouroboros.WithNodeToNode(false),
 	)
