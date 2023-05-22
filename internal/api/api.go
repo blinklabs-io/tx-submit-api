@@ -173,7 +173,7 @@ func handleSubmitTx(c *gin.Context) {
 	txIdHex := hex.EncodeToString(txIdHash[:])
 	// Connect to cardano-node and submit TX
 	errorChan := make(chan error)
-	oConn, err := ouroboros.New(
+	oConn, err := ouroboros.NewConnection(
 		ouroboros.WithNetworkMagic(uint32(cfg.Node.NetworkMagic)),
 		ouroboros.WithErrorChan(errorChan),
 		ouroboros.WithNodeToNode(false),
