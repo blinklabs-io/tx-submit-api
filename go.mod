@@ -3,7 +3,6 @@ module github.com/blinklabs-io/tx-submit-api
 go 1.19
 
 require (
-	github.com/Bitrue-exchange/libada-go v0.0.1-rc.0.20220817020305-79d8b4c4dd9c
 	github.com/blinklabs-io/gouroboros v0.40.1
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/gin-contrib/zap v0.1.0
@@ -35,7 +34,6 @@ require (
 	github.com/go-playground/validator/v10 v10.11.2 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/islishude/base58 v1.0.1 // indirect
 	github.com/jinzhu/copier v0.3.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

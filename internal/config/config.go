@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"github.com/Bitrue-exchange/libada-go"
 	ouroboros "github.com/blinklabs-io/gouroboros"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
@@ -105,18 +104,14 @@ func GetConfig() *Config {
 }
 
 func (c *Config) populateNetworkMagic() error {
-	if c.Node.Network != "" {
-		switch c.Node.Network {
-		case "preview":
-			c.Node.NetworkMagic = libada.Preview.ProtocolMagic()
-		case "preprod":
-			c.Node.NetworkMagic = libada.Preprod.ProtocolMagic()
-		case "testnet":
-			c.Node.NetworkMagic = libada.Testnet.ProtocolMagic()
-		case "mainnet":
-			c.Node.NetworkMagic = libada.Mainnet.ProtocolMagic()
-		default:
-			return fmt.Errorf("unknown network: %s", c.Node.Network)
+	if c.Node.NetworkMagic == 0 {
+		if c.Node.Network != "" {
+			network := ouroboros.NetworkByName(c.Node.Network)
+			if network == ouroboros.NetworkInvalid {
+				return fmt.Errorf("unknown network: %s", c.Node.Network)
+			}
+			c.Node.NetworkMagic = uint32(network.NetworkMagic)
+			return nil
 		}
 	}
 	return nil
