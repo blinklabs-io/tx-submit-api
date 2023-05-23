@@ -7,24 +7,30 @@ payload body and submits it to a Cardano full node using the Ouroboros
 LocalTxSubmission Node-to-Client (NtC) protocol.
 
 ## Usage
+
 The recommended method of using this application is via the published
-container images.
+container images, coupled with Blink Labs container images for the Cardano
+Node.
 
 ```
-docker run -p 8090 ghcr.io/blinklabs-io/tx-submit-api
+docker run -p 8090:8090 ghcr.io/blinklabs-io/tx-submit-api
 ```
 
-Binaries can be executed directly.
+Binaries can be executed directly and are available from
+[Releases](https://github.com/blinklabs-io/tx-submit-api/releases).
 
 ```
 ./tx-submit-api
 ```
 
 ### Configuration
+
 Configuration can be done using either a `config.yaml` file or setting
-environment variables. Our recommendation is environment variables.
+environment variables. Our recommendation is environment variables to adhere
+to the 12-factor application philisophy.
 
 #### Environment variables
+
 Configuration via environment variables can be broken into two sets of
 variables. The first set controls the behavior of the application, while the
 second set controls the connection to the Cardano node instance.
@@ -35,6 +41,7 @@ Application configuration:
 - `API_LISTEN_PORT` - Port to bind for API calls (default: 8090)
 - `DEBUG_ADDRESS` - Address to bind for pprof debugging (default: localhost)
 - `DEBUG_PORT` - Port to bind for pprof debugging, disabled if 0 (default: 0)
+- `LOGGING_HEALTHCHECKS` - Log requests to `/healthcheck` endpoint (default: false)
 - `LOGGING_LEVEL` - Logging level for log output (default: info)
 - `METRICS_LISTEN_ADDRESS` - Address to bind for Prometheus format metrics, all
     addresses if empty (default: empty)
@@ -66,6 +73,8 @@ Cardano node configuration:
    (default: unset)
 - `CARDANO_NODE_SOCKET_TCP_PORT` - Port to Cardano node NtC via TCP (default:
     unset)
+- `CARDANO_NODE_SOCKET_TIMEOUT` - Sets a timeout in seconds for waiting on
+   requests to the Cardano node (default: 30)
 
 ### Connecting to a cardano-node
 
@@ -127,6 +136,11 @@ curl -X POST \
 ## Development
 
 There is a Makefile to provide some simple helpers.
+
+Run from checkout:
+```
+go run .
+```
 
 Create a binary:
 ```
