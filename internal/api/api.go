@@ -199,7 +199,7 @@ func handleHasTx(c *gin.Context) {
 	hasTx, err := oConn.LocalTxMonitor().Client.HasTx(cborData)
 	if err != nil {
 		logger.Errorf("failure getting transaction: %s", err)
-		c.JSON(400, fmt.Sprintf("failure getting transaction: %s", err))
+		c.JSON(500, fmt.Sprintf("failure getting transaction: %s", err))
 	}
 	if !hasTx {
 		c.JSON(404, "transaction not found in mempool")
