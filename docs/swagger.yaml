@@ -11,6 +11,39 @@ info:
   title: tx-submit-api
   version: v0
 paths:
+  /api/hastx/{tx_hash}:
+    get:
+      description: Determine if a given transaction ID exists in the node mempool.
+      parameters:
+      - description: Transaction Hash
+        in: path
+        name: tx_hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "415":
+          description: Unsupported Media Type
+          schema:
+            type: string
+        "500":
+          description: Server Error
+          schema:
+            type: string
+      summary: HasTx
   /api/submit/tx:
     post:
       description: Submit an already serialized transaction to the network.

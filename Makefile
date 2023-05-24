@@ -23,6 +23,9 @@ build: $(BINARY)
 clean:
 	rm -f $(BINARY)
 
+format: mod-tidy
+	go fmt ./...
+
 swagger:
 	swag f -g api.go -d internal/api
 	swag i -g api.go -d internal/api

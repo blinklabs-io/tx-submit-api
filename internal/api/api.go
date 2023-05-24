@@ -6,11 +6,11 @@ import (
 	"io"
 	"time"
 
-	"github.com/blinklabs-io/tx-submit-api/internal/config"
-	"github.com/blinklabs-io/tx-submit-api/internal/logging"
 	ouroboros "github.com/blinklabs-io/gouroboros"
 	"github.com/blinklabs-io/gouroboros/ledger"
 	"github.com/blinklabs-io/gouroboros/protocol/localtxsubmission"
+	"github.com/blinklabs-io/tx-submit-api/internal/config"
+	"github.com/blinklabs-io/tx-submit-api/internal/logging"
 
 	"github.com/fxamacker/cbor/v2"
 	ginzap "github.com/gin-contrib/zap"
@@ -107,6 +107,7 @@ func Start(cfg *config.Config) error {
 
 	// Configure API routes
 	router.POST("/api/submit/tx", handleSubmitTx)
+	router.GET("/api/hastx/:tx_hash", handleHasTx)
 
 	// Start API listener
 	err := router.Run(fmt.Sprintf("%s:%d",
@@ -120,7 +121,95 @@ func handleHealthcheck(c *gin.Context) {
 	c.JSON(200, gin.H{"failed": false})
 }
 
+// Path parameters for GET requests
+type TxHashPathParams struct {
+	TxHash string `uri:"tx_hash" binding:"required"` // Transaction hash
+}
+
+// handleHasTx godoc
+//
+//	@Summary		HasTx
+//	@Description	Determine if a given transaction ID exists in the node mempool.
+//	@Produce		json
+//	@Param			tx_hash	path		string	true	"Transaction Hash"
+//	@Success		200		{object}	string	"Ok"
+//	@Failure		400		{object}	string	"Bad Request"
+//	@Failure		404		{object}	string	"Not Found"
+//	@Failure		415		{object}	string	"Unsupported Media Type"
+//	@Failure		500		{object}	string	"Server Error"
+//	@Router			/api/hastx/{tx_hash} [get]
+func handleHasTx(c *gin.Context) {
+	// First, initialize our configuration and loggers
+	cfg := config.GetConfig()
+	logger := logging.GetLogger()
+
+	var uriParams TxHashPathParams
+	if err := c.ShouldBindUri(&uriParams); err != nil {
+		logger.Errorf("failed to bind transaction hash from path: %s", err)
+		c.JSON(400, fmt.Sprintf("invalid transaction hash: %s", err))
+		return
+	}
+
+	txHash := uriParams.TxHash
+	// convert to cbor bytes
+	cborData, err := cbor.Marshal(txHash)
+	if err != nil {
+		logger.Errorf("failed to encode transaction hash to CBOR: %s", err)
+		c.JSON(400, fmt.Sprintf("failed to encode transaction hash to CBOR: %s", err))
+		return
+	}
+
+	// Connect to cardano-node and check for transaction
+	errorChan := make(chan error)
+	oConn, err := ouroboros.NewConnection(
+		ouroboros.WithNetworkMagic(uint32(cfg.Node.NetworkMagic)),
+		ouroboros.WithErrorChan(errorChan),
+		ouroboros.WithNodeToNode(false),
+	)
+	if err != nil {
+		logger.Errorf("failure creating Ouroboros connection: %s", err)
+		c.JSON(500, "failure communicating with node")
+		return
+	}
+	if cfg.Node.Address != "" && cfg.Node.Port > 0 {
+		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", cfg.Node.Address, cfg.Node.Port)); err != nil {
+			logger.Errorf("failure connecting to node via TCP: %s", err)
+			c.JSON(500, "failure communicating with node")
+			return
+		}
+	} else {
+		if err := oConn.Dial("unix", cfg.Node.SocketPath); err != nil {
+			logger.Errorf("failure connecting to node via UNIX socket: %s", err)
+			c.JSON(500, "failure communicating with node")
+			return
+		}
+	}
+	// Start async error handler
+	go func() {
+		err, ok := <-errorChan
+		if ok {
+			logger.Errorf("failure communicating with node: %s", err)
+			c.JSON(500, "failure communicating with node")
+		}
+	}()
+	defer func() {
+		// Close Ouroboros connection
+		oConn.Close()
+	}()
+	hasTx, err := oConn.LocalTxMonitor().Client.HasTx(cborData)
+	if err != nil {
+		logger.Errorf("failure getting transaction: %s", err)
+		c.JSON(500, fmt.Sprintf("failure getting transaction: %s", err))
+	}
+	if !hasTx {
+		c.JSON(404, "transaction not found in mempool")
+		return
+	}
+	c.JSON(200, "transaction found in mempool")
+}
+
 // handleSubmitTx godoc
+//
 //	@Summary		Submit Tx
 //	@Description	Submit an already serialized transaction to the network.
 //	@Produce		json
@@ -217,8 +306,6 @@ func handleSubmitTx(c *gin.Context) {
 		// Close Ouroboros connection
 		oConn.Close()
 	}()
-	// Start local-tx-submission protocol
-	oConn.LocalTxSubmission().Client.Start()
 	// Determine transaction type (era)
 	txType, err := determineTransactionType(txRawBytes)
 	if err != nil {

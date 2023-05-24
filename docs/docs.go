@@ -24,6 +24,56 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/hastx/{tx_hash}": {
+            "get": {
+                "description": "Determine if a given transaction ID exists in the node mempool.",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "HasTx",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Transaction Hash",
+                        "name": "tx_hash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "415": {
+                        "description": "Unsupported Media Type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/submit/tx": {
             "post": {
                 "description": "Submit an already serialized transaction to the network.",
