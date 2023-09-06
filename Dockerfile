@@ -6,4 +6,5 @@ RUN make build
 
 FROM cgr.dev/chainguard/glibc-dynamic AS tx-submit-api
 COPY --from=build /code/tx-submit-api /bin/
+USER root
 ENTRYPOINT ["tx-submit-api"]
