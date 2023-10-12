@@ -47,8 +47,8 @@ import (
 //	@contact.url	https://blinklabs.io
 //	@contact.email	support@blinklabs.io
 
-//	@license.name	Apache 2.0
-//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.name	Apache 2.0
+// @license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 func Start(cfg *config.Config) error {
 	// Disable gin debug and color output
 	gin.SetMode(gin.ReleaseMode)
@@ -321,13 +321,13 @@ func handleSubmitTx(c *gin.Context) {
 		oConn.Close()
 	}()
 	// Determine transaction type (era)
-	txType, err := determineTransactionType(txRawBytes)
+	txType, err := ledger.DetermineTransactionType(txRawBytes)
 	if err != nil {
 		c.JSON(400, "could not parse transaction to determine type")
 		return
 	}
 	// Submit the transaction
-	if err := oConn.LocalTxSubmission().Client.SubmitTx(txType, txRawBytes); err != nil {
+	if err := oConn.LocalTxSubmission().Client.SubmitTx(uint16(txType), txRawBytes); err != nil {
 		if c.GetHeader("Accept") == "application/cbor" {
 			txRejectErr := err.(localtxsubmission.TransactionRejectedError)
 			c.Data(400, "application/cbor", txRejectErr.ReasonCbor)
@@ -342,30 +342,4 @@ func handleSubmitTx(c *gin.Context) {
 	c.JSON(202, txIdHex)
 	// Increment custom metric
 	_ = ginmetrics.GetMonitor().GetMetric("tx_submit_count").Inc(nil)
-}
-
-func determineTransactionType(data []byte) (uint16, error) {
-	// TODO: uncomment this once the following issue is resolved:
-	// https://github.com/blinklabs-io/gouroboros/issues/206
-	/*
-		if _, err := ledger.NewByronTransactionFromCbor(data); err == nil {
-			return ledger.TX_TYPE_BYRON, nil
-		}
-	*/
-	if _, err := ledger.NewShelleyTransactionFromCbor(data); err == nil {
-		return ledger.TX_TYPE_SHELLEY, nil
-	}
-	if _, err := ledger.NewAllegraTransactionFromCbor(data); err == nil {
-		return ledger.TX_TYPE_ALLEGRA, nil
-	}
-	if _, err := ledger.NewMaryTransactionFromCbor(data); err == nil {
-		return ledger.TX_TYPE_MARY, nil
-	}
-	if _, err := ledger.NewAlonzoTransactionFromCbor(data); err == nil {
-		return ledger.TX_TYPE_ALONZO, nil
-	}
-	if _, err := ledger.NewBabbageTransactionFromCbor(data); err == nil {
-		return ledger.TX_TYPE_BABBAGE, nil
-	}
-	return 0, fmt.Errorf("unknown transaction type")
 }
