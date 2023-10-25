@@ -33,7 +33,9 @@ func Setup(cfg *config.LoggingConfig) {
 	// Change timestamp key name
 	loggerConfig.EncoderConfig.TimeKey = "timestamp"
 	// Use a human readable time format
-	loggerConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
+	loggerConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(
+		time.RFC3339,
+	)
 
 	// Set level
 	if cfg.Level != "" {
@@ -63,5 +65,7 @@ func GetDesugaredLogger() *zap.Logger {
 }
 
 func GetAccessLogger() *zap.Logger {
-	return globalLogger.Desugar().With(zap.String("type", "access")).WithOptions(zap.WithCaller(false))
+	return globalLogger.Desugar().
+		With(zap.String("type", "access")).
+		WithOptions(zap.WithCaller(false))
 }
