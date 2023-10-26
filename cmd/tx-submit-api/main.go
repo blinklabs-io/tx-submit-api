@@ -30,7 +30,12 @@ var cmdlineFlags struct {
 }
 
 func main() {
-	flag.StringVar(&cmdlineFlags.configFile, "config", "", "path to config file to load")
+	flag.StringVar(
+		&cmdlineFlags.configFile,
+		"config",
+		"",
+		"path to config file to load",
+	)
 	flag.Parse()
 
 	// Load config
@@ -54,9 +59,20 @@ func main() {
 
 	// Start debug listener
 	if cfg.Debug.ListenPort > 0 {
-		logger.Infof("starting debug listener on %s:%d", cfg.Debug.ListenAddress, cfg.Debug.ListenPort)
+		logger.Infof(
+			"starting debug listener on %s:%d",
+			cfg.Debug.ListenAddress,
+			cfg.Debug.ListenPort,
+		)
 		go func() {
-			err := http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Debug.ListenAddress, cfg.Debug.ListenPort), nil)
+			err := http.ListenAndServe(
+				fmt.Sprintf(
+					"%s:%d",
+					cfg.Debug.ListenAddress,
+					cfg.Debug.ListenPort,
+				),
+				nil,
+			)
 			if err != nil {
 				logger.Fatalf("failed to start debug listener: %s", err)
 			}
@@ -64,7 +80,11 @@ func main() {
 	}
 
 	// Start API listener
-	logger.Infof("starting API listener on %s:%d", cfg.Api.ListenAddress, cfg.Api.ListenPort)
+	logger.Infof(
+		"starting API listener on %s:%d",
+		cfg.Api.ListenAddress,
+		cfg.Api.ListenPort,
+	)
 	if err := api.Start(cfg); err != nil {
 		logger.Fatalf("failed to start API: %s", err)
 	}

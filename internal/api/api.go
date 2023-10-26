@@ -167,7 +167,10 @@ func handleHasTx(c *gin.Context) {
 	cborData, err := cbor.Marshal(txHash)
 	if err != nil {
 		logger.Errorf("failed to encode transaction hash to CBOR: %s", err)
-		c.JSON(400, fmt.Sprintf("failed to encode transaction hash to CBOR: %s", err))
+		c.JSON(
+			400,
+			fmt.Sprintf("failed to encode transaction hash to CBOR: %s", err),
+		)
 		return
 	}
 
@@ -279,7 +282,9 @@ func handleSubmitTx(c *gin.Context) {
 		ouroboros.WithNodeToNode(false),
 		ouroboros.WithLocalTxSubmissionConfig(
 			localtxsubmission.NewConfig(
-				localtxsubmission.WithTimeout(time.Duration(cfg.Node.Timeout)*time.Second),
+				localtxsubmission.WithTimeout(
+					time.Duration(cfg.Node.Timeout)*time.Second,
+				),
 			),
 		),
 	)
@@ -293,7 +298,9 @@ func handleSubmitTx(c *gin.Context) {
 		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", cfg.Node.Address, cfg.Node.Port)); err != nil {
 			logger.Errorf("failure connecting to node via TCP: %s", err)
 			c.JSON(500, "failure communicating with node")
-			_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
+			_ = ginmetrics.GetMonitor().
+				GetMetric("tx_submit_fail_count").
+				Inc(nil)
 			return
 		}
 	} else {
@@ -310,7 +317,9 @@ func handleSubmitTx(c *gin.Context) {
 		if ok {
 			logger.Errorf("failure communicating with node: %s", err)
 			c.JSON(500, "failure communicating with node")
-			_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
+			_ = ginmetrics.GetMonitor().
+				GetMetric("tx_submit_fail_count").
+				Inc(nil)
 		}
 	}()
 	defer func() {
