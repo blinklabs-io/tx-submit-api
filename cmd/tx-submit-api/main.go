@@ -17,12 +17,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/blinklabs-io/tx-submit-api/internal/api"
-	"github.com/blinklabs-io/tx-submit-api/internal/config"
-	"github.com/blinklabs-io/tx-submit-api/internal/logging"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+
+	"github.com/blinklabs-io/tx-submit-api/internal/api"
+	"github.com/blinklabs-io/tx-submit-api/internal/config"
+	"github.com/blinklabs-io/tx-submit-api/internal/logging"
+	"github.com/blinklabs-io/tx-submit-api/internal/version"
 )
 
 var cmdlineFlags struct {
@@ -56,6 +58,8 @@ func main() {
 			return
 		}
 	}()
+
+	logger.Infof("starting tx-submit-api %s", version.GetVersionString())
 
 	// Start debug listener
 	if cfg.Debug.ListenPort > 0 {
