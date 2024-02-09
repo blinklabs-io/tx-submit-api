@@ -55,6 +55,7 @@ type NodeConfig struct {
 	NetworkMagic uint32 `yaml:"networkMagic" envconfig:"CARDANO_NODE_NETWORK_MAGIC"`
 	Address      string `yaml:"address"      envconfig:"CARDANO_NODE_SOCKET_TCP_HOST"`
 	Port         uint   `yaml:"port"         envconfig:"CARDANO_NODE_SOCKET_TCP_PORT"`
+	SkipCheck    bool   `yaml:"skipCheck"    envconfig:"CARDANO_NODE_SKIP_CHECK"`
 	SocketPath   string `yaml:"socketPath"   envconfig:"CARDANO_NODE_SOCKET_PATH"`
 	Timeout      uint   `yaml:"timeout"      envconfig:"CARDANO_NODE_SOCKET_TIMEOUT"`
 }
@@ -132,6 +133,9 @@ func (c *Config) populateNetworkMagic() error {
 }
 
 func (c *Config) checkNode() error {
+	if c.Node.SkipCheck {
+		return nil
+	}
 	// Connect to cardano-node
 	oConn, err := ouroboros.NewConnection(
 		ouroboros.WithNetworkMagic(uint32(c.Node.NetworkMagic)),
