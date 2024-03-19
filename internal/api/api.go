@@ -32,7 +32,6 @@ import (
 	"github.com/blinklabs-io/tx-submit-api/internal/config"
 	"github.com/blinklabs-io/tx-submit-api/internal/logging"
 	"github.com/blinklabs-io/tx-submit-api/submit"
-
 )
 
 //	@title			tx-submit-api
@@ -45,8 +44,8 @@ import (
 //	@contact.url	https://blinklabs.io
 //	@contact.email	support@blinklabs.io
 
-//	@license.name	Apache 2.0
-//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.name	Apache 2.0
+// @license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 func Start(cfg *config.Config) error {
 	// Disable gin debug and color output
 	gin.SetMode(gin.ReleaseMode)
@@ -256,8 +255,10 @@ func handleSubmitTx(c *gin.Context) {
 		return
 	}
 	// Close request body after read
-	if err := c.Request.Body.Close(); err != nil {
-		logger.Errorf("failed to close request body: %s", err)
+	if c.Request.Body != nil {
+		if err := c.Request.Body.Close(); err != nil {
+			logger.Errorf("failed to close request body: %s", err)
+		}
 	}
 	// Send TX
 	errorChan := make(chan error)
