@@ -21,6 +21,8 @@ import (
 	_ "net/http/pprof"
 	"os"
 
+	_ "go.uber.org/automaxprocs"
+
 	"github.com/blinklabs-io/tx-submit-api/internal/api"
 	"github.com/blinklabs-io/tx-submit-api/internal/config"
 	"github.com/blinklabs-io/tx-submit-api/internal/logging"
