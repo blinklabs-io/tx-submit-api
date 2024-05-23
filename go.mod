@@ -3,7 +3,7 @@ module github.com/blinklabs-io/tx-submit-api
 go 1.21
 
 require (
-	github.com/blinklabs-io/gouroboros v0.84.0
+	github.com/blinklabs-io/gouroboros v0.85.0
 	github.com/fxamacker/cbor/v2 v2.6.0
 	github.com/gin-contrib/zap v1.1.3
 	github.com/gin-gonic/gin v1.10.0
