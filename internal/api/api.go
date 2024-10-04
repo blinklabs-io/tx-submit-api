@@ -15,8 +15,11 @@
 package api
 
 import (
+	"embed"
 	"fmt"
 	"io"
+	"io/fs"
+	"net/http"
 	"time"
 
 	ouroboros "github.com/blinklabs-io/gouroboros"
@@ -34,16 +37,18 @@ import (
 	"github.com/blinklabs-io/tx-submit-api/submit"
 )
 
-//	@title			tx-submit-api
-//	@version		v0
-//	@description	Cardano Transaction Submit API
-//	@Schemes		http
-//	@BasePath		/
+//go:embed static
+var staticFS embed.FS
 
-//	@contact.name	Blink Labs
-//	@contact.url	https://blinklabs.io
-//	@contact.email	support@blinklabs.io
-
+// @title			tx-submit-api
+// @version		v0
+// @description	Cardano Transaction Submit API
+// @Schemes		http
+// @BasePath		/
+// @contact.name	Blink Labs
+// @contact.url	https://blinklabs.io
+// @contact.email	support@blinklabs.io
+//
 // @license.name	Apache 2.0
 // @license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 func Start(cfg *config.Config) error {
@@ -70,6 +75,18 @@ func Start(cfg *config.Config) error {
 		SkipPaths:  skipPaths,
 	}))
 	router.Use(ginzap.RecoveryWithZap(accessLogger, true))
+
+	// Configure static route
+	fsys, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		return err
+	}
+	router.StaticFS("/ui", http.FS(fsys))
+	// Redirect from root
+	router.GET("/", func(c *gin.Context) {
+		c.Request.URL.Path = "/ui"
+		router.HandleContext(c)
+	})
 
 	// Create a healthcheck (before metrics so it's not instrumented)
 	router.GET("/healthcheck", handleHealthcheck)
@@ -121,10 +138,9 @@ func Start(cfg *config.Config) error {
 	router.GET("/api/hastx/:tx_hash", handleHasTx)
 
 	// Start API listener
-	err := router.Run(fmt.Sprintf("%s:%d",
+	return router.Run(fmt.Sprintf("%s:%d",
 		cfg.Api.ListenAddress,
 		cfg.Api.ListenPort))
-	return err
 }
 
 func handleHealthcheck(c *gin.Context) {
