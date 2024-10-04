@@ -2,4 +2,5 @@
 #
 * @blinklabs-io/core
 *.md @blinklabs-io/core @blinklabs-io/pms
+internal/api/static/* @blinklabs-io/core @blinklabs-io/frontend
 LICENSE @blinklabs-io/core @blinklabs-io/pms
