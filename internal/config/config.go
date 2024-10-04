@@ -28,6 +28,7 @@ type Config struct {
 	Metrics MetricsConfig `yaml:"metrics"`
 	Debug   DebugConfig   `yaml:"debug"`
 	Node    NodeConfig    `yaml:"node"`
+	Tls     TlsConfig     `yaml:"tls"`
 }
 
 type LoggingConfig struct {
@@ -60,6 +61,11 @@ type NodeConfig struct {
 	Timeout      uint   `yaml:"timeout"      envconfig:"CARDANO_NODE_SOCKET_TIMEOUT"`
 }
 
+type TlsConfig struct {
+	CertFilePath string `yaml:"certFilePath" envconfig:"TLS_CERT_FILE_PATH"`
+	KeyFilePath  string `yaml:"keyFilePath"  envconfig:"TLS_KEY_FILE_PATH"`
+}
+
 // Singleton config instance with default values
 var globalConfig = &Config{
 	Logging: LoggingConfig{
@@ -67,7 +73,7 @@ var globalConfig = &Config{
 		Healthchecks: false,
 	},
 	Api: ApiConfig{
-		ListenAddress: "",
+		ListenAddress: "0.0.0.0",
 		ListenPort:    8090,
 	},
 	Debug: DebugConfig{
