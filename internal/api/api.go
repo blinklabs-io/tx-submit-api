@@ -25,6 +25,7 @@ import (
 	ouroboros "github.com/blinklabs-io/gouroboros"
 	"github.com/blinklabs-io/gouroboros/protocol/localtxsubmission"
 	"github.com/fxamacker/cbor/v2"
+	cors "github.com/gin-contrib/cors"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/penglongli/gin-metrics/ginmetrics"
@@ -75,6 +76,8 @@ func Start(cfg *config.Config) error {
 	router := gin.New()
 	// Catch panics and return a 500
 	router.Use(gin.Recovery())
+	// Configure CORS
+	router.Use(cors.Default())
 	// Access logging
 	accessLogger := logging.GetAccessLogger()
 	skipPaths := []string{}
@@ -108,6 +111,8 @@ func Start(cfg *config.Config) error {
 
 	// Metrics
 	metricsRouter := gin.New()
+	// Configure CORS
+	metricsRouter.Use(cors.Default())
 	metrics := ginmetrics.GetMonitor()
 	// Set metrics path
 	metrics.SetMetricPath("/")
