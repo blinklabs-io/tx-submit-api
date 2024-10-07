@@ -11,7 +11,7 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {
-            "name": "Blink Labs",
+            "name": "Blink Labs Software",
             "url": "https://blinklabs.io",
             "email": "support@blinklabs.io"
         },
@@ -129,7 +129,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "v0",
 	Host:             "",
 	BasePath:         "/",
-	Schemes:          []string{"http"},
+	Schemes:          []string{},
 	Title:            "tx-submit-api",
 	Description:      "Cardano Transaction Submit API",
 	InfoInstanceName: "swagger",
