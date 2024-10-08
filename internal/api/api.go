@@ -138,6 +138,9 @@ func Start(cfg *config.Config) error {
 	// Add to global monitor object
 	_ = ginmetrics.GetMonitor().AddMetric(failureMetric)
 	_ = ginmetrics.GetMonitor().AddMetric(submittedMetric)
+	// Initialize metrics
+	_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").SetGaugeValue(nil, 0.0)
+	_ = ginmetrics.GetMonitor().GetMetric("tx_submit_count").SetGaugeValue(nil, 0.0)
 
 	// Start metrics listener
 	go func() {
