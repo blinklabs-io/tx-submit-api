@@ -1,13 +1,10 @@
 {
-    "schemes": [
-        "http"
-    ],
     "swagger": "2.0",
     "info": {
         "description": "Cardano Transaction Submit API",
         "title": "tx-submit-api",
         "contact": {
-            "name": "Blink Labs",
+            "name": "Blink Labs Software",
             "url": "https://blinklabs.io",
             "email": "support@blinklabs.io"
         },

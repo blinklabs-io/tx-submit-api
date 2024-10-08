@@ -44,9 +44,8 @@ var staticFS embed.FS
 // @title			tx-submit-api
 // @version		v0
 // @description	Cardano Transaction Submit API
-// @Schemes		http
 // @BasePath		/
-// @contact.name	Blink Labs
+// @contact.name	Blink Labs Software
 // @contact.url	https://blinklabs.io
 // @contact.email	support@blinklabs.io
 //

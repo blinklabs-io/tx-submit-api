@@ -2,7 +2,7 @@ basePath: /
 info:
   contact:
     email: support@blinklabs.io
-    name: Blink Labs
+    name: Blink Labs Software
     url: https://blinklabs.io
   description: Cardano Transaction Submit API
   license:
@@ -75,6 +75,4 @@ paths:
           schema:
             type: string
       summary: Submit Tx
-schemes:
-- http
 swagger: "2.0"
