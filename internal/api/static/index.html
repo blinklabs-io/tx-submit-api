@@ -1,14 +1,391 @@
 <!DOCTYPE html>
-<html>
-<head>
-<title>Tx Submit API</title>
-</head>
-<body>
-<p align="center">
-<img src="txsubmit-logo.png" />
-</p>
-<p align="center">
-GitHub: <a href="https://github.com/blinklabs-io/tx-submit-api">https://github.com/blinklabs-io/tx-submit-api</a>
-</p>
-</body>
+<html lang="en" class="bg-black h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Improved Metrics Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.10/htmx.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              terminal: {
+                text: '#F0F0F0',
+                bg: '#1E1E1E',
+                header: '#0F3B82',
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .terminal-3d {
+        transform: perspective(1000px);
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5),
+          20px 20px 60px -10px rgba(0, 0, 0, 0.3),
+          -20px -20px 60px -10px rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+      }
+      .terminal-3d:hover {
+        transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-gray-900 to-black text-terminal-text font-mono h-full flex items-center justify-center p-4"
+  >
+    <div
+      class="w-full max-w-6xl bg-terminal-bg rounded-lg overflow-hidden terminal-3d"
+    >
+      <div class="bg-terminal-header p-2 flex items-center">
+        <div class="flex space-x-2">
+          <div class="w-3 h-3 rounded-full bg-red-500"></div>
+          <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+          <div class="w-3 h-3 rounded-full bg-green-500"></div>
+        </div>
+        <div class="flex-grow text-center text-sm">Blink Labs Software</div>
+      </div>
+      <div class="p-6 h-[800px] overflow-y-auto">
+        <div class="text-sm mb-4">
+          Last login: Today<br />
+          Blink Labs Software: tx-submit-api
+        </div>
+        <div
+          id="metrics-container"
+          class="flex items-center flex-wrap font-mono gap-4 whitespace-pre mb-4"
+          hx-get="http://localhost:8081/"
+          hx-trigger="load, every 1s"
+          hx-swap="innerHTML"
+        >
+          Loading metrics...
+        </div>
+        <div class="grid grid-cols-2 gap-8">
+          <div id="memory-chart"><canvas></canvas></div>
+          <div id="process-chart"><canvas></canvas></div>
+          <div id="go-runtime-chart"><canvas></canvas></div>
+          <div id="tx-chart"><canvas></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let charts = {};
+
+      function initializeCharts() {
+        charts.memory = createChart('memory-chart', {
+          type: 'bar',
+          data: {
+            labels: ['Alloc Bytes', 'Sys Bytes', 'GC Sys Bytes'],
+            datasets: [
+              {
+                label: 'Memory Usage',
+                data: [0, 0, 0],
+                backgroundColor: [
+                  'rgba(255, 99, 132, 0.2)',
+                  'rgba(54, 162, 235, 0.2)',
+                  'rgba(255, 206, 86, 0.2)',
+                ],
+                borderColor: [
+                  'rgba(255, 99, 132, 1)',
+                  'rgba(54, 162, 235, 1)',
+                  'rgba(255, 206, 86, 1)',
+                ],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: getCommonOptions('Memory Usage', true),
+        });
+
+        charts.process = createChart('process-chart', {
+          type: 'bar',
+          data: {
+            labels: ['CPU Seconds', 'Open FDs'],
+            datasets: [
+              {
+                data: [0, 0],
+                backgroundColor: [
+                  'rgba(255, 99, 132, 0.2)',
+                  'rgba(54, 162, 235, 0.2)',
+                ],
+                borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            ...getCommonOptions('Process Metrics', false, false),
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 15,
+                ticks: {
+                  stepSize: 1,
+                  callback: function (value) {
+                    return value % 3 === 0 ? value : '';
+                  },
+                  color: 'white',
+                },
+              },
+              x: {
+                ticks: {
+                  color: 'white',
+                },
+              },
+            },
+          },
+        });
+
+        charts.goRuntime = createChart('go-runtime-chart', {
+          type: 'bar',
+          data: {
+            labels: ['Goroutines', 'Threads'],
+            datasets: [
+              {
+                data: [0, 0, 0],
+                backgroundColor: ['#00FFFF33', '#1E90FF33'],
+                borderColor: ['#00FFFF', '#1E90FF'],
+                borderWidth: 0.5,
+              },
+            ],
+          },
+          options: {
+            ...getCommonOptions('Go Runtime Metrics'),
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 15,
+                ticks: {
+                  stepSize: 5,
+                  callback: function (value) {
+                    return value % 5 === 0 ? value : '';
+                  },
+                  color: 'white',
+                },
+              },
+              x: {
+                ticks: {
+                  color: 'white',
+                },
+              },
+            },
+          },
+        });
+
+        charts.tx = createChart('tx-chart', {
+          type: 'bar',
+          data: {
+            labels: ['Submit Count', 'Submit Fail Count'],
+            datasets: [
+              {
+                label: 'Transactions',
+                data: [0, 0],
+                backgroundColor: [
+                  'rgba(75, 192, 192, 0.2)',
+                  'rgba(255, 99, 132, 0.2)',
+                ],
+                borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            ...getCommonOptions('Transaction Metrics'),
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 20,
+                ticks: {
+                  stepSize: 5,
+                  callback: function (value) {
+                    return value % 5 === 0 ? value : '';
+                  },
+                  color: 'white',
+                },
+              },
+              x: {
+                ticks: {
+                  color: 'white',
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function createChart(elementId, config) {
+        const ctx = document
+          .querySelector(`#${elementId} canvas`)
+          .getContext('2d');
+        return new Chart(ctx, config);
+      }
+
+      function getCommonOptions(
+        title,
+        useCustomYAxis = false,
+        useLegend = false
+      ) {
+        const options = {
+          responsive: true,
+          animation: {
+            duration: 700,
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: 'white',
+              },
+            },
+            x: {
+              ticks: {
+                color: 'white',
+              },
+            },
+          },
+          plugins: {
+            title: {
+              display: true,
+              text: title,
+              color: 'white',
+            },
+            legend: {
+              display: useLegend,
+              position: 'bottom',
+              labels: {
+                color: 'white',
+              },
+            },
+          },
+        };
+
+        if (useCustomYAxis) {
+          options.scales.y.ticks.callback = function (value) {
+            return (value / 1024 / 1024).toFixed(2) + ' MB';
+          };
+        }
+
+        return options;
+      }
+
+      function updateCharts(metrics) {
+        charts.memory.data.datasets[0].data = [
+          metrics.go_memstats_alloc_bytes,
+          metrics.go_memstats_sys_bytes,
+          metrics.go_memstats_gc_sys_bytes,
+        ];
+        charts.memory.update();
+
+        charts.process.data.datasets[0].data = [
+          metrics.process_cpu_seconds_total || 0,
+          metrics.process_open_fds || 0,
+        ];
+        charts.process.update();
+
+        charts.goRuntime.data.datasets[0].data = [
+          metrics.go_goroutines,
+          metrics.go_threads,
+        ];
+        charts.goRuntime.update();
+
+        charts.tx.data.datasets[0].data = [
+          metrics.tx_submit_count,
+          metrics.tx_submit_fail_count,
+        ];
+
+        charts.tx.update();
+      }
+
+      function formatMetrics(metrics) {
+        return Object.entries(metrics)
+          .map(
+            ([key, value]) =>
+              `<span class="text-green-400">${key}</span> <span class="text-yellow-300">${
+                value === null ? 'null' : value
+              }</span>`
+          )
+          .join('\n');
+      }
+
+      // Function to extract specific metric values
+      function getMetricValue(data, metricName) {
+        const regex = new RegExp(`^${metricName}\\s+([\\d\\.e+-]+)`, 'm');
+        const match = data.match(regex);
+        return match ? parseFloat(match[1]) : null;
+      }
+
+      // Function to parse metrics data
+      function parseMetrics(metricsData) {
+        return {
+          go_goroutines: getMetricValue(metricsData, 'go_goroutines'),
+          go_memstats_alloc_bytes: getMetricValue(
+            metricsData,
+            'go_memstats_alloc_bytes'
+          ),
+          go_memstats_sys_bytes: getMetricValue(
+            metricsData,
+            'go_memstats_sys_bytes'
+          ),
+          process_cpu_seconds_total: getMetricValue(
+            metricsData,
+            'process_cpu_seconds_total'
+          ),
+          process_resident_memory_bytes: getMetricValue(
+            metricsData,
+            'process_resident_memory_bytes'
+          ),
+          process_open_fds: getMetricValue(metricsData, 'process_open_fds'),
+          go_threads: getMetricValue(metricsData, 'go_threads'),
+          go_memstats_gc_sys_bytes: getMetricValue(
+            metricsData,
+            'go_memstats_gc_sys_bytes'
+          ),
+          tx_submit_count: getMetricValue(metricsData, 'tx_submit_count'),
+          tx_submit_fail_count: getMetricValue(
+            metricsData,
+            'tx_submit_fail_count'
+          ),
+        };
+      }
+
+      // Initialize charts when the page loads
+      document.addEventListener('DOMContentLoaded', function () {
+        initializeCharts();
+        htmx.config.defaultHeaders = {};
+        htmx.config.useTemplateFragments = true;
+      });
+
+      // HTMX after request event handler
+      htmx.on('htmx:afterRequest', function (evt) {
+        if (evt.detail.elt.id === 'metrics-container') {
+          if (evt.detail.failed) {
+            console.error('Failed to load metrics');
+            evt.detail.elt.innerHTML =
+              '<p class="text-red-500">Failed to load metrics. Please check your connection.</p>';
+          } else if (evt.detail.xhr.status === 200) {
+            try {
+              const metricsData = evt.detail.xhr.response;
+              const parsedMetrics = parseMetrics(metricsData);
+
+              evt.detail.elt.innerHTML = formatMetrics(parsedMetrics);
+
+              updateCharts(parsedMetrics);
+
+              console.log(
+                'Metrics updated at: ' + new Date().toLocaleTimeString()
+              );
+            } catch (error) {
+              console.error('Error parsing metrics data:', error);
+              evt.detail.elt.innerHTML =
+                '<p class="text-red-500">Error parsing metrics data. Please check the server response.</p>';
+            }
+          }
+        }
+      });
+    </script>
+  </body>
 </html>
