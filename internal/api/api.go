@@ -76,7 +76,10 @@ func Start(cfg *config.Config) error {
 	// Catch panics and return a 500
 	router.Use(gin.Recovery())
 	// Configure CORS
-	router.Use(cors.Default())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowHeaders = []string{"hx-current-url","hx-request","hx-target","hx-trigger"}
+	router.Use(cors.New(corsConfig))
 	// Access logging
 	accessLogger := logging.GetAccessLogger()
 	skipPaths := []string{}
@@ -111,7 +114,7 @@ func Start(cfg *config.Config) error {
 	// Metrics
 	metricsRouter := gin.New()
 	// Configure CORS
-	metricsRouter.Use(cors.Default())
+	metricsRouter.Use(cors.New(corsConfig))
 	metrics := ginmetrics.GetMonitor()
 	// Set metrics path
 	metrics.SetMetricPath("/")
