@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Improved Metrics Dashboard</title>
+    <title>Metrics Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.10/htmx.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
@@ -51,13 +51,13 @@
       </div>
       <div class="p-6 h-[800px] overflow-y-auto">
         <div class="text-sm mb-4">
-          Last login: Today<br />
+          <br />
           Blink Labs Software: tx-submit-api
         </div>
         <div
           id="metrics-container"
           class="flex items-center flex-wrap font-mono gap-4 whitespace-pre mb-4"
-          hx-get="http://localhost:8081/"
+          hx-get="javascript:window.location.protocol + '//' + window.location.hostname + ':8081/'"
           hx-trigger="load, every 1s"
           hx-swap="innerHTML"
         >
@@ -311,14 +311,12 @@
           .join('\n');
       }
 
-      // Function to extract specific metric values
       function getMetricValue(data, metricName) {
         const regex = new RegExp(`^${metricName}\\s+([\\d\\.e+-]+)`, 'm');
         const match = data.match(regex);
         return match ? parseFloat(match[1]) : null;
       }
 
-      // Function to parse metrics data
       function parseMetrics(metricsData) {
         return {
           go_goroutines: getMetricValue(metricsData, 'go_goroutines'),
@@ -352,14 +350,12 @@
         };
       }
 
-      // Initialize charts when the page loads
       document.addEventListener('DOMContentLoaded', function () {
         initializeCharts();
         htmx.config.defaultHeaders = {};
         htmx.config.useTemplateFragments = true;
       });
 
-      // HTMX after request event handler
       htmx.on('htmx:afterRequest', function (evt) {
         if (evt.detail.elt.id === 'metrics-container') {
           if (evt.detail.failed) {
