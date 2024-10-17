@@ -121,7 +121,8 @@ func Start(cfg *config.Config) error {
 	// Set metrics router
 	metrics.Expose(metricsRouter)
 	// Use metrics middleware without exposing path in main app router
-	metrics.UseWithoutExposingEndpoint(router)
+	metrics.SetMetricPath("/metrics")
+	metrics.Use(router)
 
 	// Custom metrics
 	failureMetric := &ginmetrics.Metric{
