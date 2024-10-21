@@ -91,8 +91,8 @@ func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
 func (c *Config) populateNetworkMagic() error {
 	if c.NetworkMagic == 0 {
 		if c.Network != "" {
-			network := ouroboros.NetworkByName(c.Network)
-			if network == ouroboros.NetworkInvalid {
+			network, ok := ouroboros.NetworkByName(c.Network)
+			if !ok {
 				return fmt.Errorf("unknown network: %s", c.Network)
 			}
 			c.NetworkMagic = uint32(network.NetworkMagic)
