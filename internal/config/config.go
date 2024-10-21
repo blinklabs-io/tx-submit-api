@@ -16,10 +16,11 @@ package config
 
 import (
 	"fmt"
+	"os"
+
 	ouroboros "github.com/blinklabs-io/gouroboros"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
-	"os"
 )
 
 type Config struct {
@@ -127,8 +128,8 @@ func GetConfig() *Config {
 func (c *Config) populateNetworkMagic() error {
 	if c.Node.NetworkMagic == 0 {
 		if c.Node.Network != "" {
-			network := ouroboros.NetworkByName(c.Node.Network)
-			if network == ouroboros.NetworkInvalid {
+			network, ok := ouroboros.NetworkByName(c.Node.Network)
+			if !ok {
 				return fmt.Errorf("unknown network: %s", c.Node.Network)
 			}
 			c.Node.NetworkMagic = uint32(network.NetworkMagic)
