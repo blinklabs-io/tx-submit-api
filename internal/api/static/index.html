@@ -249,11 +249,10 @@
             scales: {
               y: {
                 beginAtZero: true,
-                max: 20,
                 ticks: {
-                  stepSize: 5,
+                  stepSize: 250,
                   callback: function (value) {
-                    return value % 5 === 0 ? value : '';
+                    return value % 250 === 0 ? value : '';
                   },
                   color: 'white',
                 },
@@ -360,11 +359,19 @@
         ];
         charts.goRuntime.update();
 
+        const maxTxValue = Math.max(
+          metrics.tx_submit_count,
+          metrics.tx_submit_fail_count
+        );
+
+        const txMaxScale = Math.ceil(maxTxValue / 100) * 100 + 500; //buffer of 500
+
+        charts.tx.options.scales.y.max = txMaxScale;
+        console.log('txMaxScale', txMaxScale);
         charts.tx.data.datasets[0].data = [
           metrics.tx_submit_count,
           metrics.tx_submit_fail_count,
         ];
-
         charts.tx.update();
       }
 
