@@ -1,7 +1,7 @@
 # tx-submit-api
 
 <div align="center">
-    <img src="./.github/assets/tx-submit-api-logo.png" alt="Tx Submit API" width="640">
+    <img src="./.github/assets/tx-submit-api-logo.png" alt="Tx Submit API" width="320">
 </div>
 
 Transaction Submission API for Cardano
