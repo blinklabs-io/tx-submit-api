@@ -1,6 +1,10 @@
 # tx-submit-api
 
-Cardano Transaction Submission API
+<div align="center">
+    <img src="./.github/assets/tx-submit-api-logo.png" alt="Tx Submit API" width="640">
+</div>
+
+Transaction Submission API for Cardano
 
 A simple HTTP API which accepts a CBOR encoded Cardano transaction as a
 payload body and submits it to a Cardano full node using the Ouroboros
@@ -134,6 +138,17 @@ curl -X POST \
   --data-binary @tx.signed.cbor \
   http://localhost:8090/api/submit/tx
 ```
+
+### Metrics UI
+
+There is a metrics web user interface running on the service's API port.
+
+Connect to [http://localhost:8090/ui/](http://localhost:8090/ui/) with your
+browser to view it.
+
+<div align="center">
+    <img src="./.github/assets/tx-submit-api-20241120.png" alt="Tx Submit API" width="640">
+</div>
 
 ## Development
 
