@@ -78,7 +78,12 @@ func Start(cfg *config.Config) error {
 	// Configure CORS
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
-	corsConfig.AllowHeaders = []string{"hx-current-url","hx-request","hx-target","hx-trigger"}
+	corsConfig.AllowHeaders = []string{
+		"hx-current-url",
+		"hx-request",
+		"hx-target",
+		"hx-trigger",
+	}
 	router.Use(cors.New(corsConfig))
 	// Access logging
 	accessLogger := logging.GetAccessLogger()
@@ -143,8 +148,12 @@ func Start(cfg *config.Config) error {
 	_ = ginmetrics.GetMonitor().AddMetric(failureMetric)
 	_ = ginmetrics.GetMonitor().AddMetric(submittedMetric)
 	// Initialize metrics
-	_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").SetGaugeValue(nil, 0.0)
-	_ = ginmetrics.GetMonitor().GetMetric("tx_submit_count").SetGaugeValue(nil, 0.0)
+	_ = ginmetrics.GetMonitor().
+		GetMetric("tx_submit_fail_count").
+		SetGaugeValue(nil, 0.0)
+	_ = ginmetrics.GetMonitor().
+		GetMetric("tx_submit_count").
+		SetGaugeValue(nil, 0.0)
 
 	// Start metrics listener
 	go func() {
