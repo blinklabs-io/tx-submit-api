@@ -1,8 +1,6 @@
 module github.com/blinklabs-io/tx-submit-api
 
-go 1.22.9
-
-toolchain go1.22.10
+go 1.22.11
 
 require (
 	github.com/blinklabs-io/gouroboros v0.107.1
