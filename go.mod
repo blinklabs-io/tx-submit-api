@@ -3,7 +3,7 @@ module github.com/blinklabs-io/tx-submit-api
 go 1.22.11
 
 require (
-	github.com/blinklabs-io/gouroboros v0.107.1
+	github.com/blinklabs-io/gouroboros v0.108.0
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-contrib/zap v1.1.4
@@ -60,9 +60,9 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.12.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
