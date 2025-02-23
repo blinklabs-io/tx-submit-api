@@ -16,6 +16,7 @@ package submit
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	ouroboros "github.com/blinklabs-io/gouroboros"
@@ -34,6 +35,10 @@ type Config struct {
 }
 
 func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
+	// Fail fast if timeout is too large
+	if cfg.Timeout > math.MaxInt64 {
+		return "", fmt.Errorf("given timeout too large")
+	}
 	// Determine transaction type (era)
 	txType, err := ledger.DetermineTransactionType(txRawBytes)
 	if err != nil {
@@ -82,6 +87,7 @@ func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
 		oConn.Close()
 	}()
 	// Submit the transaction
+	// #nosec G115
 	if err := oConn.LocalTxSubmission().Client.SubmitTx(uint16(txType), txRawBytes); err != nil {
 		return "", fmt.Errorf("%s", err.Error())
 	}
