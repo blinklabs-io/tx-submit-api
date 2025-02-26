@@ -9,6 +9,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: blinklabs-io/tx-submit-api
 
+permissions:
+  contents: read
+
 jobs:
   docker:
     runs-on: ubuntu-latest
