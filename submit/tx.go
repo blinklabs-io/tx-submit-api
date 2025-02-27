@@ -43,18 +43,18 @@ func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
 	txType, err := ledger.DetermineTransactionType(txRawBytes)
 	if err != nil {
 		return "", fmt.Errorf(
-			"could not parse transaction to determine type: %s",
+			"could not parse transaction to determine type: %w",
 			err,
 		)
 	}
 	tx, err := ledger.NewTransactionFromCbor(txType, txRawBytes)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse transaction CBOR: %s", err)
+		return "", fmt.Errorf("failed to parse transaction CBOR: %w", err)
 	}
 
 	err = cfg.populateNetworkMagic()
 	if err != nil {
-		return "", fmt.Errorf("failed to populate networkMagic: %s", err)
+		return "", fmt.Errorf("failed to populate networkMagic: %w", err)
 	}
 
 	// Connect to cardano-node and submit TX using Ouroboros LocalTxSubmission
@@ -71,15 +71,15 @@ func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
 		),
 	)
 	if err != nil {
-		return "", fmt.Errorf("failure creating Ouroboros connection: %s", err)
+		return "", fmt.Errorf("failure creating Ouroboros connection: %w", err)
 	}
 	if cfg.NodeAddress != "" && cfg.NodePort > 0 {
 		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", cfg.NodeAddress, cfg.NodePort)); err != nil {
-			return "", fmt.Errorf("failure connecting to node via TCP: %s", err)
+			return "", fmt.Errorf("failure connecting to node via TCP: %w", err)
 		}
 	} else {
 		if err := oConn.Dial("unix", cfg.SocketPath); err != nil {
-			return "", fmt.Errorf("failure connecting to node via UNIX socket: %s", err)
+			return "", fmt.Errorf("failure connecting to node via UNIX socket: %w", err)
 		}
 	}
 	defer func() {
