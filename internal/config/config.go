@@ -97,11 +97,11 @@ func Load(configFile string) (*Config, error) {
 	if configFile != "" {
 		buf, err := os.ReadFile(configFile)
 		if err != nil {
-			return nil, fmt.Errorf("error reading config file: %s", err)
+			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 		err = yaml.Unmarshal(buf, globalConfig)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing config file: %s", err)
+			return nil, fmt.Errorf("error parsing config file: %w", err)
 		}
 	}
 	// Load config values from environment variables
@@ -109,7 +109,7 @@ func Load(configFile string) (*Config, error) {
 	// vars that we hadn't explicitly specified in annotations above
 	err := envconfig.Process("dummy", globalConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error processing environment: %s", err)
+		return nil, fmt.Errorf("error processing environment: %w", err)
 	}
 	if err := globalConfig.populateNetworkMagic(); err != nil {
 		return nil, err
@@ -149,13 +149,13 @@ func (c *Config) checkNode() error {
 		ouroboros.WithNodeToNode(false),
 	)
 	if err != nil {
-		return fmt.Errorf("failure creating Ouroboros connection: %s", err)
+		return fmt.Errorf("failure creating Ouroboros connection: %w", err)
 	}
 
 	if c.Node.Address != "" && c.Node.Port > 0 {
 		// Connect to TCP port
 		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", c.Node.Address, c.Node.Port)); err != nil {
-			return fmt.Errorf("failure connecting to node via TCP: %s", err)
+			return fmt.Errorf("failure connecting to node via TCP: %w", err)
 		}
 	} else if c.Node.SocketPath != "" {
 		// Check that node socket path exists
@@ -163,11 +163,11 @@ func (c *Config) checkNode() error {
 			if os.IsNotExist(err) {
 				return fmt.Errorf("node socket path does not exist: %s", c.Node.SocketPath)
 			} else {
-				return fmt.Errorf("unknown error checking if node socket path exists: %s", err)
+				return fmt.Errorf("unknown error checking if node socket path exists: %w", err)
 			}
 		}
 		if err := oConn.Dial("unix", c.Node.SocketPath); err != nil {
-			return fmt.Errorf("failure connecting to node via UNIX socket: %s", err)
+			return fmt.Errorf("failure connecting to node via UNIX socket: %w", err)
 		}
 	} else {
 		return fmt.Errorf("you must specify either the UNIX socket path or the address/port for your cardano-node")
