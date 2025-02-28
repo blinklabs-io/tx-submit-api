@@ -1,4 +1,4 @@
-// Copyright 2023 Blink Labs Software
+// Copyright 2025 Blink Labs Software
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -170,7 +171,7 @@ func (c *Config) checkNode() error {
 			return fmt.Errorf("failure connecting to node via UNIX socket: %w", err)
 		}
 	} else {
-		return fmt.Errorf("you must specify either the UNIX socket path or the address/port for your cardano-node")
+		return errors.New("you must specify either the UNIX socket path or the address/port for your cardano-node")
 	}
 	// Close Ouroboros connection
 	oConn.Close()
