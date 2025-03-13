@@ -18,18 +18,16 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"os"
-	"time"
-
 	// #nosec G108
 	_ "net/http/pprof"
-
-	"go.uber.org/automaxprocs/maxprocs"
+	"os"
+	"time"
 
 	"github.com/blinklabs-io/tx-submit-api/internal/api"
 	"github.com/blinklabs-io/tx-submit-api/internal/config"
 	"github.com/blinklabs-io/tx-submit-api/internal/logging"
 	"github.com/blinklabs-io/tx-submit-api/internal/version"
+	"go.uber.org/automaxprocs/maxprocs"
 )
 
 var cmdlineFlags struct {

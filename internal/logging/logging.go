@@ -15,12 +15,12 @@
 package logging
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"log"
 	"time"
 
 	"github.com/blinklabs-io/tx-submit-api/internal/config"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type Logger = zap.SugaredLogger
