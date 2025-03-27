@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/blinklabs-io/gouroboros v0.114.1
 	github.com/fxamacker/cbor/v2 v2.7.0
-	github.com/gin-contrib/cors v1.7.3
+	github.com/gin-contrib/cors v1.7.4
 	github.com/gin-contrib/zap v1.1.4
 	github.com/gin-gonic/gin v1.10.0
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -64,7 +64,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.12.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
-	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
