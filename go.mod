@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/blinklabs-io/gouroboros v0.115.2
-	github.com/fxamacker/cbor/v2 v2.7.0
+	github.com/fxamacker/cbor/v2 v2.8.0
 	github.com/gin-contrib/cors v1.7.4
 	github.com/gin-contrib/zap v1.1.4
 	github.com/gin-gonic/gin v1.10.0
