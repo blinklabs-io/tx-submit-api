@@ -92,7 +92,7 @@ func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
 	if err := oConn.LocalTxSubmission().Client.SubmitTx(uint16(txType), txRawBytes); err != nil {
 		return "", fmt.Errorf("%s", err.Error())
 	}
-	return tx.Hash(), nil
+	return tx.Hash().String(), nil
 }
 
 func (c *Config) populateNetworkMagic() error {
