@@ -1,0 +1,98 @@
+openapi: 3.0.1
+info:
+  contact:
+    email: support@blinklabs.io
+    name: Blink Labs Software
+    url: https://blinklabs.io
+  description: Cardano Transaction Submit API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: tx-submit-api
+  version: v0
+servers:
+- url: /
+paths:
+  /api/hastx/{tx_hash}:
+    get:
+      description: Determine if a given transaction ID exists in the node mempool.
+      parameters:
+      - description: Transaction Hash
+        in: path
+        name: tx_hash
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not Found
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported Media Type
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Server Error
+      summary: HasTx
+  /api/submit/tx:
+    post:
+      description: Submit an already serialized transaction to the network.
+      parameters:
+      - description: Content type
+        in: header
+        name: Content-Type
+        required: true
+        schema:
+          enum:
+          - application/cbor
+          type: string
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad Request
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported Media Type
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Server Error
+      summary: Submit Tx
+components:
+  schemas: {}
+x-original-swagger-version: "2.0"
