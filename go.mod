@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.4
 
 require (
-	github.com/blinklabs-io/gouroboros v0.129.0
+	github.com/blinklabs-io/gouroboros v0.130.1
 	github.com/fxamacker/cbor/v2 v2.9.0
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-contrib/zap v1.1.5
@@ -25,7 +25,7 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
-	github.com/blinklabs-io/plutigo v0.0.2-0.20250717183329-b331a97fb319 // indirect
+	github.com/blinklabs-io/plutigo v0.0.3 // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.6 // indirect
 	github.com/bytedance/sonic v1.13.3 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
