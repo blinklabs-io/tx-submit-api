@@ -231,10 +231,8 @@ func handleHasTx(c *gin.Context) {
 	}
 
 	// Connect to cardano-node and check for transaction
-	errorChan := make(chan error)
 	oConn, err := ouroboros.NewConnection(
 		ouroboros.WithNetworkMagic(uint32(cfg.Node.NetworkMagic)),
-		ouroboros.WithErrorChan(errorChan),
 		ouroboros.WithNodeToNode(false),
 	)
 	if err != nil {
@@ -255,14 +253,6 @@ func handleHasTx(c *gin.Context) {
 			return
 		}
 	}
-	// Start async error handler
-	go func() {
-		err, ok := <-errorChan
-		if ok {
-			logger.Errorf("failure communicating with node: %s", err)
-			c.JSON(500, "failure communicating with node")
-		}
-	}()
 	defer func() {
 		// Close Ouroboros connection
 		oConn.Close()
@@ -271,6 +261,7 @@ func handleHasTx(c *gin.Context) {
 	if err != nil {
 		logger.Errorf("failure getting transaction: %s", err)
 		c.JSON(500, fmt.Sprintf("failure getting transaction: %s", err))
+		return
 	}
 	if !hasTx {
 		c.JSON(404, "transaction not found in mempool")
