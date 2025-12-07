@@ -21,7 +21,6 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"time"
 
 	ouroboros "github.com/blinklabs-io/gouroboros"
 	"github.com/blinklabs-io/gouroboros/protocol/localtxsubmission"
@@ -31,7 +30,6 @@ import (
 	"github.com/blinklabs-io/tx-submit-api/submit"
 	"github.com/fxamacker/cbor/v2"
 	cors "github.com/gin-contrib/cors"
-	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/penglongli/gin-metrics/ginmetrics"
 	swaggerFiles "github.com/swaggo/files"     // swagger embed files
@@ -55,16 +53,16 @@ func Start(cfg *config.Config) error {
 	// Standard logging
 	logger := logging.GetLogger()
 	if cfg.Tls.CertFilePath != "" && cfg.Tls.KeyFilePath != "" {
-		logger.Infof(
-			"starting API TLS listener on %s:%d",
-			cfg.Api.ListenAddress,
-			cfg.Api.ListenPort,
+		logger.Info(
+			"starting API TLS listener",
+			"address", cfg.Api.ListenAddress,
+			"port", cfg.Api.ListenPort,
 		)
 	} else {
-		logger.Infof(
-			"starting API listener on %s:%d",
-			cfg.Api.ListenAddress,
-			cfg.Api.ListenPort,
+		logger.Info(
+			"starting API listener",
+			"address", cfg.Api.ListenAddress,
+			"port", cfg.Api.ListenPort,
 		)
 	}
 	// Disable gin debug and color output
@@ -90,14 +88,10 @@ func Start(cfg *config.Config) error {
 	skipPaths := []string{}
 	if cfg.Logging.Healthchecks {
 		skipPaths = append(skipPaths, "/healthcheck")
-		logger.Infof("disabling access logs for /healthcheck")
+		logger.Info("disabling access logs for /healthcheck")
 	}
-	router.Use(ginzap.GinzapWithConfig(accessLogger, &ginzap.Config{
-		TimeFormat: time.RFC3339,
-		UTC:        true,
-		SkipPaths:  skipPaths,
-	}))
-	router.Use(ginzap.RecoveryWithZap(accessLogger, true))
+	router.Use(logging.GinLogger(accessLogger, skipPaths))
+	router.Use(logging.GinRecovery(accessLogger, true))
 
 	// Configure static route
 	fsys, err := fs.Sub(staticFS, "static")
@@ -158,9 +152,9 @@ func Start(cfg *config.Config) error {
 	// Start metrics listener
 	go func() {
 		// TODO: return error if we cannot initialize metrics
-		logger.Infof("starting metrics listener on %s:%d",
-			cfg.Metrics.ListenAddress,
-			cfg.Metrics.ListenPort)
+		logger.Info("starting metrics listener",
+			"address", cfg.Metrics.ListenAddress,
+			"port", cfg.Metrics.ListenPort)
 		_ = metricsRouter.Run(fmt.Sprintf("%s:%d",
 			cfg.Metrics.ListenAddress,
 			cfg.Metrics.ListenPort))
@@ -213,7 +207,7 @@ func handleHasTx(c *gin.Context) {
 
 	var uriParams TxHashPathParams
 	if err := c.ShouldBindUri(&uriParams); err != nil {
-		logger.Errorf("failed to bind transaction hash from path: %s", err)
+		logger.Error("failed to bind transaction hash from path", "err", err)
 		c.JSON(400, fmt.Sprintf("invalid transaction hash: %s", err))
 		return
 	}
@@ -222,7 +216,7 @@ func handleHasTx(c *gin.Context) {
 	// convert to cbor bytes
 	cborData, err := cbor.Marshal(txHash)
 	if err != nil {
-		logger.Errorf("failed to encode transaction hash to CBOR: %s", err)
+		logger.Error("failed to encode transaction hash to CBOR", "err", err)
 		c.JSON(
 			400,
 			fmt.Sprintf("failed to encode transaction hash to CBOR: %s", err),
@@ -236,19 +230,19 @@ func handleHasTx(c *gin.Context) {
 		ouroboros.WithNodeToNode(false),
 	)
 	if err != nil {
-		logger.Errorf("failure creating Ouroboros connection: %s", err)
+		logger.Error("failure creating Ouroboros connection", "err", err)
 		c.JSON(500, "failure communicating with node")
 		return
 	}
 	if cfg.Node.Address != "" && cfg.Node.Port > 0 {
 		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", cfg.Node.Address, cfg.Node.Port)); err != nil {
-			logger.Errorf("failure connecting to node via TCP: %s", err)
+			logger.Error("failure connecting to node via TCP", "err", err)
 			c.JSON(500, "failure communicating with node")
 			return
 		}
 	} else {
 		if err := oConn.Dial("unix", cfg.Node.SocketPath); err != nil {
-			logger.Errorf("failure connecting to node via UNIX socket: %s", err)
+			logger.Error("failure connecting to node via UNIX socket", "err", err)
 			c.JSON(500, "failure communicating with node")
 			return
 		}
@@ -259,7 +253,7 @@ func handleHasTx(c *gin.Context) {
 	}()
 	hasTx, err := oConn.LocalTxMonitor().Client.HasTx(cborData)
 	if err != nil {
-		logger.Errorf("failure getting transaction: %s", err)
+		logger.Error("failure getting transaction", "err", err)
 		c.JSON(500, fmt.Sprintf("failure getting transaction: %s", err))
 		return
 	}
@@ -288,7 +282,7 @@ func handleSubmitTx(c *gin.Context) {
 	// Check our headers for content-type
 	if c.ContentType() != "application/cbor" {
 		// Log the error, return an error to the user, and increment failed count
-		logger.Errorf("invalid request body, should be application/cbor")
+		logger.Error("invalid request body, should be application/cbor")
 		c.JSON(415, "invalid request body, should be application/cbor")
 		_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 		return
@@ -297,7 +291,7 @@ func handleSubmitTx(c *gin.Context) {
 	txRawBytes, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		// Log the error, return an error to the user, and increment failed count
-		logger.Errorf("failed to read request body: %s", err)
+		logger.Error("failed to read request body", "err", err)
 		c.JSON(500, "failed to read request body")
 		_ = ginmetrics.GetMonitor().GetMetric("tx_submit_fail_count").Inc(nil)
 		return
@@ -305,7 +299,7 @@ func handleSubmitTx(c *gin.Context) {
 	// Close request body after read
 	if c.Request.Body != nil {
 		if err := c.Request.Body.Close(); err != nil {
-			logger.Errorf("failed to close request body: %s", err)
+			logger.Error("failed to close request body", "err", err)
 		}
 	}
 	// Send TX
@@ -341,7 +335,7 @@ func handleSubmitTx(c *gin.Context) {
 	go func() {
 		err, ok := <-errorChan
 		if ok {
-			logger.Errorf("failure communicating with node: %s", err)
+			logger.Error("failure communicating with node", "err", err)
 			c.JSON(500, "failure communicating with node")
 			_ = ginmetrics.GetMonitor().
 				GetMetric("tx_submit_fail_count").

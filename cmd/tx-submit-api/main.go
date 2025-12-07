@@ -34,7 +34,7 @@ var cmdlineFlags struct {
 }
 
 func logPrintf(format string, v ...any) {
-	logging.GetLogger().Infof(format, v...)
+	logging.GetLogger().Info(fmt.Sprintf(format, v...))
 }
 
 func main() {
@@ -56,31 +56,23 @@ func main() {
 	// Configure logging
 	logging.Setup(&cfg.Logging)
 	logger := logging.GetLogger()
-	// Sync logger on exit
-	defer func() {
-		if err := logger.Sync(); err != nil {
-			// We don't actually care about the error here, but we have to do something
-			// to appease the linter
-			return
-		}
-	}()
 
-	logger.Infof("starting tx-submit-api %s", version.GetVersionString())
+	logger.Info("starting tx-submit-api", "version", version.GetVersionString())
 
 	// Configure max processes with our logger wrapper, toss undo func
 	_, err = maxprocs.Set(maxprocs.Logger(logPrintf))
 	if err != nil {
 		// If we hit this, something really wrong happened
-		logger.Errorf(err.Error())
+		logger.Error("maxprocs setup failed", "err", err)
 		os.Exit(1)
 	}
 
 	// Start debug listener
 	if cfg.Debug.ListenPort > 0 {
-		logger.Infof(
-			"starting debug listener on %s:%d",
-			cfg.Debug.ListenAddress,
-			cfg.Debug.ListenPort,
+		logger.Info(
+			"starting debug listener",
+			"address", cfg.Debug.ListenAddress,
+			"port", cfg.Debug.ListenPort,
 		)
 		go func() {
 			debugger := &http.Server{
@@ -93,14 +85,16 @@ func main() {
 			}
 			err := debugger.ListenAndServe()
 			if err != nil {
-				logger.Fatalf("failed to start debug listener: %s", err)
+				logger.Error("failed to start debug listener", "err", err)
+				os.Exit(1)
 			}
 		}()
 	}
 
 	// Start API listener
 	if err := api.Start(cfg); err != nil {
-		logger.Fatalf("failed to start API: %s", err)
+		logger.Error("failed to start API", "err", err)
+		os.Exit(1)
 	}
 
 	// Wait forever
