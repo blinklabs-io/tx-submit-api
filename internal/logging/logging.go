@@ -15,57 +15,65 @@
 package logging
 
 import (
+	"fmt"
 	"log"
+	"log/slog"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/blinklabs-io/tx-submit-api/internal/config"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-type Logger = zap.SugaredLogger
-
-var globalLogger *Logger
+var (
+	globalLogger *slog.Logger
+	accessLogger *slog.Logger
+)
 
 func Setup(cfg *config.LoggingConfig) {
-	// Build our custom logging config
-	loggerConfig := zap.NewProductionConfig()
-	// Change timestamp key name
-	loggerConfig.EncoderConfig.TimeKey = "timestamp"
-	// Use a human readable time format
-	loggerConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(
-		time.RFC3339,
-	)
-
-	// Set level
-	if cfg.Level != "" {
-		level, err := zapcore.ParseLevel(cfg.Level)
-		if err != nil {
-			log.Fatalf("error configuring logger: %s", err)
-		}
-		loggerConfig.Level.SetLevel(level)
-	}
-
-	// Create the logger
-	l, err := loggerConfig.Build()
+	level, err := parseLevel(cfg.Level)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error configuring logger: %s", err)
 	}
 
-	// Store the "sugared" version of the logger
-	globalLogger = l.Sugar()
+	opts := &slog.HandlerOptions{
+		Level: level,
+		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+			if attr.Key == slog.TimeKey {
+				attr.Key = "timestamp"
+				attr.Value = slog.StringValue(attr.Value.Time().Format(time.RFC3339))
+			}
+			return attr
+		},
+	}
+
+	handler := slog.NewJSONHandler(os.Stdout, opts)
+	globalLogger = slog.New(handler)
+	accessLogger = globalLogger.With(slog.String("type", "access"))
 }
 
-func GetLogger() *zap.SugaredLogger {
+func GetLogger() *slog.Logger {
 	return globalLogger
 }
 
-func GetDesugaredLogger() *zap.Logger {
-	return globalLogger.Desugar()
+func GetAccessLogger() *slog.Logger {
+	return accessLogger
 }
 
-func GetAccessLogger() *zap.Logger {
-	return globalLogger.Desugar().
-		With(zap.String("type", "access")).
-		WithOptions(zap.WithCaller(false))
+func parseLevel(level string) (slog.Leveler, error) {
+	if level == "" {
+		return slog.LevelInfo, nil
+	}
+	switch strings.ToLower(level) {
+	case "debug":
+		return slog.LevelDebug, nil
+	case "info":
+		return slog.LevelInfo, nil
+	case "warn", "warning":
+		return slog.LevelWarn, nil
+	case "error":
+		return slog.LevelError, nil
+	default:
+		return nil, fmt.Errorf("invalid log level: %s", level)
+	}
 }

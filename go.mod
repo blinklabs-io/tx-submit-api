@@ -8,7 +8,6 @@ require (
 	github.com/blinklabs-io/gouroboros v0.141.0
 	github.com/fxamacker/cbor/v2 v2.9.0
 	github.com/gin-contrib/cors v1.7.6
-	github.com/gin-contrib/zap v1.1.6
 	github.com/gin-gonic/gin v1.11.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/penglongli/gin-metrics v0.1.13
@@ -16,7 +15,6 @@ require (
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/swaggo/swag v1.16.6
 	go.uber.org/automaxprocs v1.6.0
-	go.uber.org/zap v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
