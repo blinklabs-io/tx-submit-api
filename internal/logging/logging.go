@@ -41,7 +41,9 @@ func Setup(cfg *config.LoggingConfig) {
 		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
 			if attr.Key == slog.TimeKey {
 				attr.Key = "timestamp"
-				attr.Value = slog.StringValue(attr.Value.Time().Format(time.RFC3339))
+				attr.Value = slog.StringValue(
+					attr.Value.Time().Format(time.RFC3339),
+				)
 			}
 			return attr
 		},
