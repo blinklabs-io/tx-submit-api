@@ -25,10 +25,7 @@ import (
 	"github.com/blinklabs-io/tx-submit-api/internal/config"
 )
 
-var (
-	globalLogger *slog.Logger
-	accessLogger *slog.Logger
-)
+var globalLogger *slog.Logger
 
 func Setup(cfg *config.LoggingConfig) {
 	level, err := parseLevel(cfg.Level)
@@ -51,15 +48,10 @@ func Setup(cfg *config.LoggingConfig) {
 
 	handler := slog.NewJSONHandler(os.Stdout, opts)
 	globalLogger = slog.New(handler)
-	accessLogger = globalLogger.With(slog.String("type", "access"))
 }
 
 func GetLogger() *slog.Logger {
 	return globalLogger
-}
-
-func GetAccessLogger() *slog.Logger {
-	return accessLogger
 }
 
 func parseLevel(level string) (slog.Leveler, error) {
