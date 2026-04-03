@@ -35,6 +35,31 @@ type Config struct {
 	Timeout      uint
 }
 
+// DialNode creates and dials an Ouroboros connection to the configured node.
+// Callers are responsible for closing the returned connection.
+// Additional protocol options (e.g. WithLocalTxMonitorConfig) can be supplied
+// via opts and are applied after the base options.
+func DialNode(networkMagic uint32, nodeAddress string, nodePort uint, socketPath string, opts ...ouroboros.ConnectionOptionFunc) (*ouroboros.Connection, error) {
+	baseOpts := []ouroboros.ConnectionOptionFunc{
+		ouroboros.WithNetworkMagic(networkMagic),
+		ouroboros.WithNodeToNode(false),
+	}
+	oConn, err := ouroboros.NewConnection(append(baseOpts, opts...)...)
+	if err != nil {
+		return nil, fmt.Errorf("failure creating ouroboros connection: %w", err)
+	}
+	if nodeAddress != "" && nodePort > 0 {
+		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", nodeAddress, nodePort)); err != nil {
+			return nil, fmt.Errorf("failure connecting to node via TCP: %w", err)
+		}
+	} else {
+		if err := oConn.Dial("unix", socketPath); err != nil {
+			return nil, fmt.Errorf("failure connecting to node via UNIX socket: %w", err)
+		}
+	}
+	return oConn, nil
+}
+
 func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
 	// Fail fast if timeout is too large
 	if cfg.Timeout > math.MaxInt64 {
@@ -58,11 +83,12 @@ func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
 		return "", fmt.Errorf("failed to populate networkMagic: %w", err)
 	}
 
-	// Connect to cardano-node and submit TX using Ouroboros LocalTxSubmission
-	oConn, err := ouroboros.NewConnection(
-		ouroboros.WithNetworkMagic(uint32(cfg.NetworkMagic)),
+	oConn, err := DialNode(
+		uint32(cfg.NetworkMagic),
+		cfg.NodeAddress,
+		cfg.NodePort,
+		cfg.SocketPath,
 		ouroboros.WithErrorChan(cfg.ErrorChan),
-		ouroboros.WithNodeToNode(false),
 		ouroboros.WithLocalTxSubmissionConfig(
 			localtxsubmission.NewConfig(
 				localtxsubmission.WithTimeout(
@@ -72,25 +98,14 @@ func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
 		),
 	)
 	if err != nil {
-		return "", fmt.Errorf("failure creating Ouroboros connection: %w", err)
+		return "", err
 	}
-	if cfg.NodeAddress != "" && cfg.NodePort > 0 {
-		if err := oConn.Dial("tcp", fmt.Sprintf("%s:%d", cfg.NodeAddress, cfg.NodePort)); err != nil {
-			return "", fmt.Errorf("failure connecting to node via TCP: %w", err)
-		}
-	} else {
-		if err := oConn.Dial("unix", cfg.SocketPath); err != nil {
-			return "", fmt.Errorf("failure connecting to node via UNIX socket: %w", err)
-		}
-	}
-	defer func() {
-		// Close Ouroboros connection
-		oConn.Close()
-	}()
+	defer oConn.Close()
+
 	// Submit the transaction
 	// #nosec G115
 	if err := oConn.LocalTxSubmission().Client.SubmitTx(uint16(txType), txRawBytes); err != nil {
-		return "", fmt.Errorf("%s", err.Error())
+		return "", fmt.Errorf("transaction rejected: %w", err)
 	}
 	return tx.Hash().String(), nil
 }
