@@ -1,8 +1,6 @@
 # tx-submit-api
 
-<div align="center">
-    <img src="./.github/assets/tx-submit-api-logo.png" alt="Tx Submit API" width="320">
-</div>
+![Tx Submit API](./.github/assets/tx-submit-api-logo.png)
 
 Transaction Submission API for Cardano
 
@@ -16,14 +14,14 @@ The recommended method of using this application is via the published
 container images, coupled with Blink Labs container images for the Cardano
 Node.
 
-```
+```sh
 docker run -p 8090:8090 ghcr.io/blinklabs-io/tx-submit-api
 ```
 
 Binaries can be executed directly and are available from
 [Releases](https://github.com/blinklabs-io/tx-submit-api/releases).
 
-```
+```sh
 ./tx-submit-api
 ```
 
@@ -40,12 +38,13 @@ variables. The first set controls the behavior of the application, while the
 second set controls the connection to the Cardano node instance.
 
 Application configuration:
+
 - `API_LISTEN_ADDRESS` - Address to bind for API calls, all addresses if empty
     (default: empty)
 - `API_LISTEN_PORT` - Port to bind for API calls (default: 8090)
 - `DEBUG_ADDRESS` - Address to bind for pprof debugging (default: localhost)
 - `DEBUG_PORT` - Port to bind for pprof debugging, disabled if 0 (default: 0)
-- `LOGGING_HEALTHCHECKS` - Log requests to `/healthcheck` endpoint (default: false)
+- `LOGGING_HEALTHCHECKS` - Log requests to `/health` and `/healthz` endpoints (default: false)
 - `LOGGING_LEVEL` - Logging level for log output (default: info)
 - `METRICS_LISTEN_ADDRESS` - Address to bind for Prometheus format metrics, all
     addresses if empty (default: empty)
@@ -71,6 +70,7 @@ NtC communication socket over TCP. TCP connections are preferred over socket
 within the application.
 
 Cardano node configuration:
+
 - `CARDANO_NETWORK` - Use a named Cardano network (default: mainnet)
 - `CARDANO_NODE_NETWORK_MAGIC` - Cardano network magic (default: automatically
     determined from named network)
@@ -84,6 +84,8 @@ Cardano node configuration:
     unset)
 - `CARDANO_NODE_SOCKET_TIMEOUT` - Sets a timeout in seconds for waiting on
    requests to the Cardano node (default: 30)
+- `CARDANO_NODE_HEALTH_CHECK_INTERVAL` - Interval in seconds for the background
+   node readiness health checker (default: 30)
 
 ### Connecting to a cardano-node
 
@@ -158,16 +160,19 @@ browser to view it.
 There is a Makefile to provide some simple helpers.
 
 Run from checkout:
-```
+
+```sh
 go run .
 ```
 
 Create a binary:
-```
+
+```sh
 make
 ```
 
 Create a docker image:
-```
+
+```sh
 make image
 ```

@@ -16,6 +16,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"encoding/hex"
 	"encoding/json"
@@ -27,7 +28,9 @@ import (
 	"net"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	ouroboros "github.com/blinklabs-io/gouroboros"
@@ -48,6 +51,73 @@ var staticFS embed.FS
 // maxTxBodyBytes is the maximum accepted request body size for transaction
 // submission. Cardano's protocol limit is ~16KB; 64KB gives ample overhead.
 const maxTxBodyBytes = 64 * 1024
+
+// nodeHealthState holds the latest result of the background readiness probe.
+type nodeHealthState struct {
+	mu        sync.RWMutex
+	healthy   bool
+	lastCheck time.Time
+	lastError error
+}
+
+var nodeHealth = &nodeHealthState{}
+
+// startNodeHealthPoller runs a background goroutine that periodically dials the
+// configured node transport (TCP or Unix socket) and updates nodeHealth. It runs
+// an initial check immediately so /healthz is never stale on first request.
+func startNodeHealthPoller(ctx context.Context, cfg *config.Config) {
+	logger := logging.GetLogger()
+	probe := func() {
+		timeout := time.Duration(cfg.Node.Timeout) * time.Second // #nosec G115
+		var err error
+		if cfg.Node.Address != "" && cfg.Node.Port > 0 {
+			addr := net.JoinHostPort(cfg.Node.Address, strconv.FormatUint(uint64(cfg.Node.Port), 10))
+			var conn net.Conn
+			conn, err = net.DialTimeout("tcp", addr, timeout)
+			if err == nil {
+				_ = conn.Close()
+			}
+		} else {
+			var conn net.Conn
+			conn, err = net.DialTimeout("unix", cfg.Node.SocketPath, timeout)
+			if err == nil {
+				_ = conn.Close()
+			}
+		}
+
+		nodeHealth.mu.Lock()
+		prev := nodeHealth.healthy
+		nodeHealth.healthy = err == nil
+		nodeHealth.lastCheck = time.Now()
+		nodeHealth.lastError = err
+		nodeHealth.mu.Unlock()
+
+		// Log only on state transitions to avoid noise.
+		if err == nil && !prev {
+			logger.Info("node became reachable")
+		} else if err != nil && prev {
+			logger.Error("node became unreachable", "err", err)
+		}
+	}
+
+	go func() {
+		probe()
+		interval := cfg.Node.HealthCheckInterval
+		if interval <= 0 {
+			interval = 30
+		}
+		ticker := time.NewTicker(time.Duration(interval) * time.Second) // #nosec G115
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				probe()
+			}
+		}
+	}()
+}
 
 // corsMiddleware adds CORS headers allowing all origins.
 func corsMiddleware(next http.Handler) http.Handler {
@@ -132,7 +202,9 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 }
 
 // newMux creates the API ServeMux. Used by Start and tests to avoid route drift.
-func newMux(fsys fs.FS) *http.ServeMux {
+// nh is the node health state used by the readiness handler; callers supply it
+// so tests can inject an isolated instance without touching global state.
+func newMux(fsys fs.FS, nh *nodeHealthState) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	// Static UI
@@ -146,7 +218,10 @@ func newMux(fsys fs.FS) *http.ServeMux {
 		http.Redirect(w, r, "/ui", http.StatusMovedPermanently)
 	})
 
-	mux.HandleFunc("GET /healthcheck", handleHealthcheck)
+	mux.HandleFunc("GET /health", handleLiveness)
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		handleReadiness(w, r, nh)
+	})
 	// Swagger UI
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
@@ -202,11 +277,12 @@ func Start(cfg *config.Config) error {
 		return err
 	}
 
-	mux := newMux(fsys)
+	startNodeHealthPoller(context.Background(), cfg)
+	mux := newMux(fsys, nodeHealth)
 
 	skipPaths := []string{}
 	if !cfg.Logging.Healthchecks {
-		skipPaths = append(skipPaths, "/healthcheck")
+		skipPaths = append(skipPaths, "/health", "/healthz")
 	}
 	var handler http.Handler = mux
 	handler = loggingMiddleware(skipPaths)(handler)
@@ -253,9 +329,20 @@ func Start(cfg *config.Config) error {
 	return err
 }
 
-func handleHealthcheck(w http.ResponseWriter, _ *http.Request) {
-	// TODO: add some actual health checking here
-	writeJSON(w, http.StatusOK, map[string]bool{"failed": false})
+func handleLiveness(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func handleReadiness(w http.ResponseWriter, _ *http.Request, nh *nodeHealthState) {
+	nh.mu.RLock()
+	healthy := nh.healthy
+	nh.mu.RUnlock()
+
+	if healthy {
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	} else {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "unavailable"})
+	}
 }
 
 // handleHasTx godoc
@@ -289,7 +376,7 @@ func handleHasTx(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Connect to cardano-node and check for transaction
-	timeout := time.Duration(cfg.Node.Timeout) * time.Second //nolint:gosec
+	timeout := time.Duration(cfg.Node.Timeout) * time.Second // #nosec G115
 	oConn, err := submit.DialNode(
 		uint32(cfg.Node.NetworkMagic),
 		cfg.Node.Address,
@@ -433,7 +520,7 @@ func handleSubmitTx(w http.ResponseWriter, r *http.Request) {
 			if ok {
 				logger.Error("post-submission connection error", "err", err)
 			}
-		case <-time.After(time.Duration(cfg.Node.Timeout) * time.Second): //nolint:gosec
+		case <-time.After(time.Duration(cfg.Node.Timeout) * time.Second): // #nosec G115
 		}
 	}()
 }

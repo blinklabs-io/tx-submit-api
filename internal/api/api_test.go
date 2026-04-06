@@ -15,6 +15,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -36,8 +37,9 @@ func TestMain(m *testing.M) {
 }
 
 // newTestMux delegates to newMux to ensure test routes always match production routes.
-func newTestMux() http.Handler {
-	mux := newMux(fstest.MapFS{})
+// Each call gets a fresh nodeHealthState so parallel tests don't share state.
+func newTestMux(nh *nodeHealthState) http.Handler {
+	mux := newMux(fstest.MapFS{}, nh)
 	var handler http.Handler = mux
 	handler = loggingMiddleware(nil)(handler)
 	handler = recoveryMiddleware(handler)
@@ -143,12 +145,12 @@ func TestRealClientIP(t *testing.T) {
 	}
 }
 
-// --- healthcheck ---
+// --- liveness ---
 
-func TestHealthcheck_OK(t *testing.T) {
+func TestLiveness_OK(t *testing.T) {
 	t.Parallel()
 	rec := httptest.NewRecorder()
-	newTestMux().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthcheck", nil))
+	newTestMux(&nodeHealthState{}).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/health", nil))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
@@ -156,16 +158,50 @@ func TestHealthcheck_OK(t *testing.T) {
 	if ct := rec.Header().Get("Content-Type"); ct != "application/json" {
 		t.Errorf("expected Content-Type application/json, got %q", ct)
 	}
-	var body map[string]bool
+	var body map[string]string
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("failed to parse body: %s", err)
 	}
-	v, ok := body["failed"]
-	if !ok {
-		t.Fatal("expected key \"failed\" in response body")
+	if body["status"] != "ok" {
+		t.Errorf("expected status=ok, got %q", body["status"])
 	}
-	if v != false {
-		t.Errorf("expected failed=false, got %v", v)
+}
+
+// --- readiness ---
+
+func TestReadiness_OK(t *testing.T) {
+	t.Parallel()
+	nh := &nodeHealthState{healthy: true}
+	rec := httptest.NewRecorder()
+	newTestMux(nh).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	var body map[string]string
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("failed to parse body: %s", err)
+	}
+	if body["status"] != "ok" {
+		t.Errorf("expected status=ok, got %q", body["status"])
+	}
+}
+
+func TestReadiness_Unavailable(t *testing.T) {
+	t.Parallel()
+	nh := &nodeHealthState{healthy: false}
+	rec := httptest.NewRecorder()
+	newTestMux(nh).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503, got %d", rec.Code)
+	}
+	var body map[string]string
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("failed to parse body: %s", err)
+	}
+	if body["status"] != "unavailable" {
+		t.Errorf("expected status=unavailable, got %q", body["status"])
 	}
 }
 
@@ -198,7 +234,7 @@ func TestSubmitTx_ContentType(t *testing.T) {
 			if tt.contentType != "" {
 				req.Header.Set("Content-Type", tt.contentType)
 			}
-			newTestMux().ServeHTTP(rec, req)
+			newTestMux(&nodeHealthState{}).ServeHTTP(rec, req)
 
 			if rec.Code != tt.wantStatus {
 				t.Fatalf("expected %d, got %d", tt.wantStatus, rec.Code)
@@ -212,7 +248,7 @@ func TestSubmitTx_InvalidTxBytes(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/api/submit/tx", strings.NewReader("not-valid-cbor"))
 	req.Header.Set("Content-Type", "application/cbor")
-	newTestMux().ServeHTTP(rec, req)
+	newTestMux(&nodeHealthState{}).ServeHTTP(rec, req)
 
 	// Invalid bytes fail transaction type detection before any node connection → 400
 	if rec.Code != http.StatusBadRequest {
@@ -226,7 +262,7 @@ func TestHasTx_NoNode(t *testing.T) {
 	t.Parallel()
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/hastx/abc123", nil)
-	newTestMux().ServeHTTP(rec, req)
+	newTestMux(&nodeHealthState{}).ServeHTTP(rec, req)
 
 	// No node available → 500
 	if rec.Code != http.StatusInternalServerError {
@@ -255,7 +291,7 @@ func TestCORS(t *testing.T) {
 		{
 			name:       "normal response includes CORS origin header",
 			method:     http.MethodGet,
-			path:       "/healthcheck",
+			path:       "/health",
 			wantStatus: http.StatusOK,
 		},
 	}
@@ -265,7 +301,7 @@ func TestCORS(t *testing.T) {
 			t.Parallel()
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(tt.method, tt.path, nil)
-			newTestMux().ServeHTTP(rec, req)
+			newTestMux(&nodeHealthState{}).ServeHTTP(rec, req)
 
 			if rec.Code != tt.wantStatus {
 				t.Fatalf("expected %d, got %d", tt.wantStatus, rec.Code)
@@ -295,7 +331,7 @@ func TestSubmitTx_RequestsTotal_InvalidCBOR(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/api/submit/tx", strings.NewReader("not-valid-cbor"))
 	req.Header.Set("Content-Type", "application/cbor")
-	newTestMux().ServeHTTP(rec, req)
+	newTestMux(&nodeHealthState{}).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", rec.Code)
@@ -314,7 +350,7 @@ func TestSubmitTx_RequestsTotal_NoIncrementOnBadContentType(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/api/submit/tx", strings.NewReader("data"))
 	req.Header.Set("Content-Type", "application/json")
-	newTestMux().ServeHTTP(rec, req)
+	newTestMux(&nodeHealthState{}).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusUnsupportedMediaType {
 		t.Fatalf("expected 415, got %d", rec.Code)
@@ -323,4 +359,23 @@ func TestSubmitTx_RequestsTotal_NoIncrementOnBadContentType(t *testing.T) {
 	if after != before {
 		t.Errorf("requests_total should not increment on content-type rejection, got increment of %f", after-before)
 	}
+}
+
+// --- health poller ---
+
+func TestStartNodeHealthPoller_ZeroInterval(t *testing.T) {
+	cfg := &config.Config{}
+	cfg.Node.HealthCheckInterval = 0
+	cfg.Node.Timeout = 1
+
+	// Ensure startNodeHealthPoller does not panic when HealthCheckInterval is 0
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("startNodeHealthPoller panicked: %v", r)
+		}
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	startNodeHealthPoller(ctx, cfg)
 }

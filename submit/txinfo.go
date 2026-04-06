@@ -52,16 +52,20 @@ func ParseTxInfo(rawBytes []byte) (*TxInfo, error) {
 	}
 
 	w := tx.Witnesses()
-	switch {
-	case len(w.PlutusV3Scripts()) > 0:
-		info.ScriptType = "plutus_v3"
-	case len(w.PlutusV2Scripts()) > 0:
-		info.ScriptType = "plutus_v2"
-	case len(w.PlutusV1Scripts()) > 0:
-		info.ScriptType = "plutus_v1"
-	case len(w.NativeScripts()) > 0:
-		info.ScriptType = "native"
-	default:
+	if w != nil {
+		switch {
+		case len(w.PlutusV3Scripts()) > 0:
+			info.ScriptType = "plutus_v3"
+		case len(w.PlutusV2Scripts()) > 0:
+			info.ScriptType = "plutus_v2"
+		case len(w.PlutusV1Scripts()) > 0:
+			info.ScriptType = "plutus_v1"
+		case len(w.NativeScripts()) > 0:
+			info.ScriptType = "native"
+		default:
+			info.ScriptType = "none"
+		}
+	} else {
 		info.ScriptType = "none"
 	}
 
