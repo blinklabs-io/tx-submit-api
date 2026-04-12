@@ -3,7 +3,7 @@ module github.com/blinklabs-io/tx-submit-api
 go 1.25.8
 
 require (
-	github.com/blinklabs-io/gouroboros v0.160.3
+	github.com/blinklabs-io/gouroboros v0.163.5
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/swaggo/http-swagger v1.3.4
@@ -18,7 +18,7 @@ require (
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
-	github.com/blinklabs-io/plutigo v0.0.29 // indirect
+	github.com/blinklabs-io/plutigo v0.1.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.6 // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.6 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
