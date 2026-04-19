@@ -25,10 +25,13 @@ import (
 
 	"github.com/blinklabs-io/tx-submit-api/internal/config"
 	"github.com/blinklabs-io/tx-submit-api/internal/logging"
+	"github.com/blinklabs-io/tx-submit-api/internal/metrics"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
 func TestMain(m *testing.M) {
 	logging.Setup(&config.LoggingConfig{Level: "error"})
+	metrics.RegisterForTesting()
 	os.Exit(m.Run())
 }
 
@@ -40,6 +43,104 @@ func newTestMux() http.Handler {
 	handler = recoveryMiddleware(handler)
 	handler = corsMiddleware(handler)
 	return handler
+}
+
+// --- realClientIP ---
+
+func TestRealClientIP(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name           string
+		xRealIP        string
+		xForwarded     string
+		remoteAddr     string
+		trustedProxies []string
+		want           string
+	}{
+		{
+			name:           "X-Real-IP wins when peer is trusted",
+			xRealIP:        "1.2.3.4",
+			xForwarded:     "5.6.7.8",
+			remoteAddr:     "9.10.11.12:9000",
+			trustedProxies: []string{"9.10.11.12"},
+			want:           "1.2.3.4",
+		},
+		{
+			name:           "X-Forwarded-For single IP when peer is trusted",
+			xForwarded:     "10.0.0.1",
+			remoteAddr:     "9.10.11.12:9000",
+			trustedProxies: []string{"9.10.11.12"},
+			want:           "10.0.0.1",
+		},
+		{
+			name:           "X-Forwarded-For multiple IPs returns first when peer is trusted",
+			xForwarded:     "10.0.0.1, 172.16.0.1, 192.168.1.1",
+			remoteAddr:     "9.10.11.12:9000",
+			trustedProxies: []string{"9.10.11.12"},
+			want:           "10.0.0.1",
+		},
+		{
+			name:           "forwarded headers ignored when peer is not trusted",
+			xRealIP:        "1.2.3.4",
+			xForwarded:     "5.6.7.8",
+			remoteAddr:     "9.10.11.12:9000",
+			trustedProxies: []string{},
+			want:           "9.10.11.12",
+		},
+		{
+			name:           "trusted proxy matched by CIDR",
+			xRealIP:        "1.2.3.4",
+			remoteAddr:     "10.0.0.5:9000",
+			trustedProxies: []string{"10.0.0.0/8"},
+			want:           "1.2.3.4",
+		},
+		{
+			name:       "RemoteAddr with port strips port",
+			remoteAddr: "203.0.113.5:54321",
+			want:       "203.0.113.5",
+		},
+		{
+			name:       "RemoteAddr without port returned as-is",
+			remoteAddr: "203.0.113.5",
+			want:       "203.0.113.5",
+		},
+		{
+			name:       "IPv6 RemoteAddr strips port",
+			remoteAddr: "[::1]:8080",
+			want:       "::1",
+		},
+		{
+			name:           "invalid X-Real-IP falls back to RemoteAddr",
+			xRealIP:        "not-an-ip",
+			remoteAddr:     "9.10.11.12:9000",
+			trustedProxies: []string{"9.10.11.12"},
+			want:           "9.10.11.12",
+		},
+		{
+			name:           "invalid X-Forwarded-For falls back to RemoteAddr",
+			xForwarded:     "hostname.example.com",
+			remoteAddr:     "9.10.11.12:9000",
+			trustedProxies: []string{"9.10.11.12"},
+			want:           "9.10.11.12",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.RemoteAddr = tt.remoteAddr
+			if tt.xRealIP != "" {
+				req.Header.Set("X-Real-IP", tt.xRealIP)
+			}
+			if tt.xForwarded != "" {
+				req.Header.Set("X-Forwarded-For", tt.xForwarded)
+			}
+			if got := realClientIP(req, tt.trustedProxies); got != tt.want {
+				t.Errorf("want %q, got %q", tt.want, got)
+			}
+		})
+	}
 }
 
 // --- healthcheck ---
@@ -180,5 +281,46 @@ func TestCORS(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// --- metrics ---
+
+func TestSubmitTx_RequestsTotal_InvalidCBOR(t *testing.T) {
+	// Not parallel: reads counter value which is package-global state.
+	// httptest.NewRequest sets RemoteAddr = "192.0.2.1:1234".
+	const clientIP = "192.0.2.1"
+	before := testutil.ToFloat64(metrics.TxSubmitRequestsTotal().WithLabelValues("error"))
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/submit/tx", strings.NewReader("not-valid-cbor"))
+	req.Header.Set("Content-Type", "application/cbor")
+	newTestMux().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+	after := testutil.ToFloat64(metrics.TxSubmitRequestsTotal().WithLabelValues("error"))
+	if after-before != 1 {
+		t.Errorf("requests_total{ip=%s,result=error}: expected increment of 1, got %f", clientIP, after-before)
+	}
+}
+
+func TestSubmitTx_RequestsTotal_NoIncrementOnBadContentType(t *testing.T) {
+	// Not parallel: reads counter value which is package-global state.
+	const clientIP = "192.0.2.1"
+	before := testutil.ToFloat64(metrics.TxSubmitRequestsTotal().WithLabelValues("error"))
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/submit/tx", strings.NewReader("data"))
+	req.Header.Set("Content-Type", "application/json")
+	newTestMux().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnsupportedMediaType {
+		t.Fatalf("expected 415, got %d", rec.Code)
+	}
+	after := testutil.ToFloat64(metrics.TxSubmitRequestsTotal().WithLabelValues("error"))
+	if after != before {
+		t.Errorf("requests_total should not increment on content-type rejection, got increment of %f", after-before)
 	}
 }
