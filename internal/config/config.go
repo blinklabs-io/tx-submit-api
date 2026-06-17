@@ -55,13 +55,14 @@ type MetricsConfig struct {
 }
 
 type NodeConfig struct {
-	Network      string `yaml:"network"      envconfig:"CARDANO_NETWORK"`
-	NetworkMagic uint32 `yaml:"networkMagic" envconfig:"CARDANO_NODE_NETWORK_MAGIC"`
-	Address      string `yaml:"address"      envconfig:"CARDANO_NODE_SOCKET_TCP_HOST"`
-	Port         uint   `yaml:"port"         envconfig:"CARDANO_NODE_SOCKET_TCP_PORT"`
-	SkipCheck    bool   `yaml:"skipCheck"    envconfig:"CARDANO_NODE_SKIP_CHECK"`
-	SocketPath   string `yaml:"socketPath"   envconfig:"CARDANO_NODE_SOCKET_PATH"`
-	Timeout      uint   `yaml:"timeout"      envconfig:"CARDANO_NODE_SOCKET_TIMEOUT"`
+	Network             string `yaml:"network"              envconfig:"CARDANO_NETWORK"`
+	NetworkMagic        uint32 `yaml:"networkMagic"         envconfig:"CARDANO_NODE_NETWORK_MAGIC"`
+	Address             string `yaml:"address"              envconfig:"CARDANO_NODE_SOCKET_TCP_HOST"`
+	Port                uint   `yaml:"port"                 envconfig:"CARDANO_NODE_SOCKET_TCP_PORT"`
+	SkipCheck           bool   `yaml:"skipCheck"            envconfig:"CARDANO_NODE_SKIP_CHECK"`
+	SocketPath          string `yaml:"socketPath"           envconfig:"CARDANO_NODE_SOCKET_PATH"`
+	Timeout             uint   `yaml:"timeout"              envconfig:"CARDANO_NODE_SOCKET_TIMEOUT"`
+	HealthCheckInterval uint   `yaml:"healthCheckInterval"  envconfig:"CARDANO_NODE_HEALTH_CHECK_INTERVAL"`
 }
 
 type TlsConfig struct {
@@ -88,16 +89,17 @@ var globalConfig = &Config{
 		ListenPort:    8081,
 	},
 	Node: NodeConfig{
-		Network:    "mainnet",
-		SocketPath: "/node-ipc/node.socket",
-		Timeout:    30,
+		Network:             "mainnet",
+		SocketPath:          "/node-ipc/node.socket",
+		Timeout:             30,
+		HealthCheckInterval: 30,
 	},
 }
 
 func Load(configFile string) (*Config, error) {
 	// Load config file as YAML if provided
 	if configFile != "" {
-		buf, err := os.ReadFile(configFile)
+		buf, err := os.ReadFile(configFile) // #nosec G304 -- loading configuration file strictly passed from CLI
 		if err != nil {
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
@@ -175,6 +177,6 @@ func (c *Config) checkNode() error {
 		return errors.New("you must specify either the UNIX socket path or the address/port for your cardano-node")
 	}
 	// Close Ouroboros connection
-	oConn.Close()
+	_ = oConn.Close()
 	return nil
 }
