@@ -1,37 +1,20 @@
-name: Docker CI
+# Generated automatically by org-governance-bot. Do not edit manually.
+name: "Docker CI"
 
 on:
   pull_request:
-    branches: ['main']
-    paths: ['Dockerfile','cmd/**','docs/**','internal/**','go.*','.github/workflows/ci-docker.yml']
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: blinklabs-io/tx-submit-api
-
-permissions:
-  contents: read
+    branches:
+      - main
+    paths:
+      - Dockerfile
+      - cmd/**
+      - docs/**
+      - internal/**
+      - go.*
+      - .github/workflows/ci-docker.yml
 
 jobs:
-  docker:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.3
-        with:
-          fetch-depth: '0'
-      - name: qemu
-        uses: docker/setup-qemu-action@v4
-      - uses: docker/setup-buildx-action@v4
-      - id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      - name: build
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: false
-          ### TODO: test multiple platforms
-          # platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+  orchestrate:
+    uses: blinklabs-io/actions/.github/workflows/reuseable-ci-docker.yml@main
+    with:
+      image-name: blinklabs-io/tx-submit-api
