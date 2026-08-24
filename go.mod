@@ -3,7 +3,7 @@ module github.com/blinklabs-io/tx-submit-api
 go 1.25.8
 
 require (
-	github.com/blinklabs-io/gouroboros v0.193.0
+	github.com/blinklabs-io/gouroboros v0.193.3
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/swaggo/http-swagger v1.3.4
@@ -44,7 +44,7 @@ require (
 	github.com/swaggo/files v1.0.1 // indirect
 	github.com/utxorpc/go-codegen v0.19.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	golang.org/x/crypto v0.54.0 // indirect
+	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
