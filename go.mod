@@ -3,7 +3,7 @@ module github.com/blinklabs-io/tx-submit-api
 go 1.26.5
 
 require (
-	github.com/blinklabs-io/gouroboros v0.205.4
+	github.com/blinklabs-io/gouroboros v0.207.4
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/swaggo/http-swagger v1.3.4
@@ -26,7 +26,7 @@ require (
 	github.com/consensys/gnark-crypto v0.21.0 // indirect
 	github.com/decred/dcrd/crypto/blake256 v1.1.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
-	github.com/fxamacker/cbor/v2 v2.9.3 // indirect
+	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/spec v0.20.7 // indirect
