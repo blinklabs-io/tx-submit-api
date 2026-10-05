@@ -32,7 +32,7 @@ $(BINARY_OUTPUT): mod-tidy $(GO_FILES)
 .PHONY: build clean image mod-tidy
 
 clean:
-	rm -f $(BINARY_OUTPUT)
+	rm -f $(BINARY) $(BINARY).exe
 
 format: mod-tidy
 	go fmt ./...
