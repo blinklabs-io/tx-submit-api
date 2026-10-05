@@ -1,4 +1,7 @@
 BINARY=tx-submit-api
+GOOS ?= $(shell go env GOOS)
+BINARY_SUFFIX := $(if $(filter windows,$(GOOS)),.exe,)
+BINARY_OUTPUT := $(BINARY)$(BINARY_SUFFIX)
 
 # Determine root directory
 ROOT_DIR=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -13,23 +16,23 @@ GOMODULE=$(shell grep ^module $(ROOT_DIR)/go.mod | awk '{ print $$2 }')
 GO_LDFLAGS=-ldflags "-s -w -X '$(GOMODULE)/internal/version.Version=$(shell git describe --tags --exact-match 2>/dev/null)' -X '$(GOMODULE)/internal/version.CommitHash=$(shell git rev-parse --short HEAD)'"
 
 # Alias for building program binary
-build: $(BINARY)
+build: $(BINARY_OUTPUT)
 
 mod-tidy:
 	go mod tidy
 
 # Build our program binary
 # Depends on GO_FILES to determine when rebuild is needed
-$(BINARY): mod-tidy $(GO_FILES)
+$(BINARY_OUTPUT): mod-tidy $(GO_FILES)
 	CGO_ENABLED=0 go build \
 		$(GO_LDFLAGS) \
-		-o $(BINARY) \
+		-o $(BINARY_OUTPUT) \
 		./cmd/$(BINARY)
 
 .PHONY: build clean image mod-tidy
 
 clean:
-	rm -f $(BINARY)
+	rm -f $(BINARY) $(BINARY).exe
 
 format: mod-tidy
 	go fmt ./...
