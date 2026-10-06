@@ -35,3 +35,4 @@ jobs:
       binary-name: tx-submit-api
       description: A Go implementation of the Cardano Submit API service
       docker-image: blinklabs/tx-submit-api
+      update-go-proxy: true
