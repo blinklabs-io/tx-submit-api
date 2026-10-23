@@ -1,6 +1,6 @@
 module github.com/blinklabs-io/tx-submit-api/openapi
 
-go 1.18
+go 1.26.10
 
 require github.com/stretchr/testify v1.10.0
 
