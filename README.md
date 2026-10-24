@@ -59,6 +59,7 @@ shortcuts for known network magic configurations. Supported named networks are:
 - mainnet
 - preprod
 - preview
+- dijkstra (DijkstraNet, network magic 6)
 - testnet
 
 You can set the network to an empty value and provide your own network magic to

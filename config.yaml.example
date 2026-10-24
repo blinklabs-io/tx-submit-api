@@ -53,7 +53,7 @@ node:
   # Named Cardano network for cardano-node
   #
   # This is a short-cut to select the NetworkMagic and can be used to
-  # select mainnet, preprod, or preview networks.
+  # select mainnet, preprod, preview, or dijkstra networks.
   #
   # This can also be set via the CARDANO_NETWORK environment variable
   network: mainnet
