@@ -16,14 +16,21 @@ package api
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
 
+	ouroboros "github.com/blinklabs-io/gouroboros"
+	"github.com/blinklabs-io/gouroboros/ledger"
+	"github.com/blinklabs-io/gouroboros/protocol/localstatequery"
+	"github.com/blinklabs-io/gouroboros/protocol/localtxmonitor"
 	"github.com/blinklabs-io/tx-submit-api/internal/config"
 	"github.com/blinklabs-io/tx-submit-api/internal/logging"
 	"github.com/blinklabs-io/tx-submit-api/internal/metrics"
@@ -267,6 +274,100 @@ func TestHasTx_NoNode(t *testing.T) {
 	// No node available → 500
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("expected 500, got %d", rec.Code)
+	}
+}
+
+// conwayTxHex is a minimal Conway transaction: one input, no outputs, fee 111.
+const conwayTxHex = "84a300d9010281825820" +
+	"0000000000000000000000000000000000000000000000000000000000000000" +
+	"00018002186fa0f5f6"
+
+// startMempoolNode serves node-to-client LocalStateQuery and LocalTxMonitor on
+// a UNIX socket. The node reports eraID as its current era and holds txCbor in
+// its mempool tagged with that era. It returns the socket path.
+func startMempoolNode(t *testing.T, eraID uint, txCbor []byte) string {
+	t.Helper()
+	socketPath := filepath.Join(t.TempDir(), "node.socket")
+	listener, err := net.Listen("unix", socketPath)
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	t.Cleanup(func() { _ = listener.Close() })
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+			oConn, err := ouroboros.NewConnection(
+				ouroboros.WithConnection(conn),
+				ouroboros.WithNetworkMagic(config.GetConfig().Node.NetworkMagic),
+				ouroboros.WithServer(true),
+				ouroboros.WithNodeToNode(false),
+				ouroboros.WithLocalStateQueryConfig(localstatequery.NewConfig(
+					localstatequery.WithAcquireFunc(
+						func(localstatequery.CallbackContext, localstatequery.AcquireTarget, bool) error {
+							return nil
+						},
+					),
+					localstatequery.WithQueryFunc(
+						func(localstatequery.CallbackContext, localstatequery.QueryWrapper) (any, error) {
+							return eraID, nil
+						},
+					),
+					localstatequery.WithReleaseFunc(
+						func(localstatequery.CallbackContext) error { return nil },
+					),
+				)),
+				ouroboros.WithLocalTxMonitorConfig(localtxmonitor.NewConfig(
+					localtxmonitor.WithGetMempoolFunc(
+						func(localtxmonitor.CallbackContext) (uint64, uint32, []localtxmonitor.TxAndEraId, error) {
+							return 0, 1 << 20, []localtxmonitor.TxAndEraId{
+								{EraId: eraID, Tx: txCbor},
+							}, nil
+						},
+					),
+				)),
+			)
+			if err != nil {
+				_ = conn.Close()
+				continue
+			}
+			t.Cleanup(func() { _ = oConn.Close() })
+		}
+	}()
+	return socketPath
+}
+
+// The node matches a HasTx query on era and transaction ID, so the handler
+// must tag the ID with the node's current era to find a mempool transaction.
+func TestHasTx_FoundInCurrentEraMempool(t *testing.T) {
+	txCbor, err := hex.DecodeString(conwayTxHex)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tx, err := ledger.NewTransactionFromCbor(ledger.TxTypeConway, txCbor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.GetConfig()
+	saved := cfg.Node
+	t.Cleanup(func() { cfg.Node = saved })
+	cfg.Node.NetworkMagic = 764824073
+	socketPath := startMempoolNode(t, ledger.TxTypeConway, txCbor)
+	cfg.Node.Address = ""
+	cfg.Node.Port = 0
+	cfg.Node.SocketPath = socketPath
+	cfg.Node.Timeout = 5
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(
+		http.MethodGet, "/api/hastx/"+tx.Hash().String(), nil,
+	)
+	newTestMux(&nodeHealthState{}).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
 }
 
