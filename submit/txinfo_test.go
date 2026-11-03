@@ -54,9 +54,9 @@ func buildMinimalConwayBody() map[uint]any {
 	// Enterprise address: 0x60 (type 6, mainnet) + 28-byte zero payment keyhash.
 	addr := append([]byte{0x60}, make([]byte, 28)...)
 	return map[uint]any{
-		0: [][]any{{make([]byte, 32), uint32(0)}},        // inputs
+		0: [][]any{{make([]byte, 32), uint32(0)}},              // inputs
 		1: []map[uint]any{{0: addr, 1: uint64(1_000_000_000)}}, // outputs
-		2: uint64(100_000),                               // fee
+		2: uint64(100_000),                                     // fee
 	}
 }
 
