@@ -15,6 +15,7 @@
 package submit
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -60,7 +61,22 @@ func DialNode(networkMagic uint32, nodeAddress string, nodePort uint, socketPath
 	return oConn, nil
 }
 
-func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
+// CloseTimeout bounds how long CloseNode waits for a connection to shut down.
+const CloseTimeout = 10 * time.Second
+
+// CloseNode closes conn, waiting at most CloseTimeout for its goroutines to
+// finish. ctx is usually cancelled when a close is needed, so only its values
+// carry over to the bounded context.
+func CloseNode(ctx context.Context, conn *ouroboros.Connection) error {
+	closeCtx, cancel := context.WithTimeout(
+		context.WithoutCancel(ctx),
+		CloseTimeout,
+	)
+	defer cancel()
+	return conn.Close(closeCtx)
+}
+
+func SubmitTx(ctx context.Context, cfg *Config, txRawBytes []byte) (string, error) {
 	// Fail fast if timeout is too large
 	if cfg.Timeout > math.MaxInt64 {
 		return "", errors.New("given timeout too large")
@@ -100,7 +116,9 @@ func SubmitTx(cfg *Config, txRawBytes []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer oConn.Close()
+	// No callbacks are registered and no lock is held, so waiting for the
+	// connection's goroutines cannot deadlock.
+	defer func() { _ = CloseNode(ctx, oConn) }()
 
 	// Submit the transaction
 	// #nosec G115
