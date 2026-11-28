@@ -402,7 +402,9 @@ func handleHasTx(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, "failure communicating with node")
 		return
 	}
-	defer oConn.Close()
+	// No callbacks are registered and no lock is held across the close.
+	reqCtx := r.Context()
+	defer func() { _ = submit.CloseNode(reqCtx, oConn) }()
 
 	// The node matches HasTx on the era tag as well as the transaction ID, and
 	// its mempool holds only transactions of the current ledger era.
@@ -497,7 +499,7 @@ func handleSubmitTx(w http.ResponseWriter, r *http.Request) {
 		SocketPath:   cfg.Node.SocketPath,
 		Timeout:      cfg.Node.Timeout,
 	}
-	txHash, err := submit.SubmitTx(submitConfig, txRawBytes)
+	txHash, err := submit.SubmitTx(r.Context(), submitConfig, txRawBytes)
 	if err != nil {
 		var txRejectErr *localtxsubmission.TransactionRejectedError
 		isRejected := errors.As(err, &txRejectErr)

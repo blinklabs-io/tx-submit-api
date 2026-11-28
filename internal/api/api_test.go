@@ -26,6 +26,7 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	ouroboros "github.com/blinklabs-io/gouroboros"
 	"github.com/blinklabs-io/gouroboros/ledger"
@@ -333,7 +334,11 @@ func startMempoolNode(t *testing.T, eraID uint, txCbor []byte) string {
 				_ = conn.Close()
 				continue
 			}
-			t.Cleanup(func() { _ = oConn.Close() })
+			t.Cleanup(func() {
+				closeCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				_ = oConn.Close(closeCtx)
+			})
 		}
 	}()
 	return socketPath

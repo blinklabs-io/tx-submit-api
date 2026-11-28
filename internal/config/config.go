@@ -15,11 +15,13 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 
 	ouroboros "github.com/blinklabs-io/gouroboros"
+	"github.com/blinklabs-io/tx-submit-api/submit"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
 )
@@ -177,6 +179,8 @@ func (c *Config) checkNode() error {
 		return errors.New("you must specify either the UNIX socket path or the address/port for your cardano-node")
 	}
 	// Close Ouroboros connection
-	_ = oConn.Close()
+	closeCtx, cancel := context.WithTimeout(context.Background(), submit.CloseTimeout)
+	defer cancel()
+	_ = oConn.Close(closeCtx)
 	return nil
 }
